@@ -10,6 +10,7 @@
 
 using std::queue;
 using std::cout;
+using namespace std::chrono;
 
 //Note: the branching factor is set to 3 by default.
 Tree::Tree() {
@@ -50,6 +51,7 @@ Tree& Tree::operator=(Tree& other) {
 
 //Insert a data into the tree. Will insert to the first void space encountered via use of DFS in a breadth-first, iterative manner.
 void Tree::insert(double data) {
+    auto start = steady_clock::now();
 	//root case
 	if (this->root_ == NULL) {
 		pair<double, int> new_pair (data, this->unq_);
@@ -80,6 +82,9 @@ void Tree::insert(double data) {
 
 		a++;
 	}	
+    auto end = steady_clock::now();
+    auto duration = duration_cast<microseconds>(end - start);
+    cout << "duration, microseconds: " << duration.count() << "\n\n";
 	int dh;
 	if (this->is_balanced(ch)) {
 		dh = ch + 1;
@@ -169,6 +174,7 @@ void Tree::insert(double data) {
 	prev->subtrees_.at(insertion_index) = new TreeNode(new_pair);
 	//calculate new alc_unq_
 	this->sort();
+
 	return;
 }
 
@@ -749,6 +755,7 @@ void Tree::alloc_lvl() {
 
 //return the height of the tree.
 //This function returns the height of unq_. 
+//It's zero-indexed; the root has height=0.
 int Tree::height() {
 	int hc = 1;
 	if ( (this->unq_ - 1) == 0) {
@@ -832,14 +839,15 @@ pair<double, int> Tree::DFS(int d_abs_ind) {
 		TreeNode* null_t = new TreeNode(null_p);
 		return null_t->data_;
 	}
-	int capacity = this->cap_less_one(d_height);
+	int cap_less_one_ = this->cap_less_one(d_height);
 	//determine i
 	vector<int> B;
-	for (int n = cap_less_one(d_height); n < cap(d_height); n++) {
+    int cap_ = cap(d_height);
+	for (int n = cap_less_one_; n < cap_; n++) {
 		B.push_back(n);
 	}
 	vector<int> C;
-	for (int n = cap_less_one(d_height); n < d_abs_ind; n++) {
+	for (int n = cap_less_one_; n < d_abs_ind; n++) {
 		C.push_back(n);
 	}
 	int x = 0;
@@ -868,6 +876,8 @@ pair<double, int> Tree::DFS(int d_abs_ind) {
 		return null_t->data_;
 	}
 	//create A
+    cap_less_one_ = cap_less_one(c_height);
+    cap_ = cap(c_height);
 	int abv = -1;
 	for (int index = d_height; index > 0; index--) {
 		if (abv == -1) {
@@ -875,18 +885,20 @@ pair<double, int> Tree::DFS(int d_abs_ind) {
 			if (c_height == 1) {
 				continue;
 			} else {
-				abv = i + (cap_less_one(c_height-1) - 1);
+				abv = i + (cap_less_one_ - 1);
 			}
 		} else {
 			A.at(index) = abv;
 			if (c_height == 1) {
 				continue;
 			} else if (c_height == 2) {
-				abv = ( (abv - cap_less_one(c_height)) / bf) + 1;
+				abv = ( (abv - cap_) / bf) + 1;
 			} else {
-				abv = ( (abv - cap_less_one(c_height)) / bf ) + cap_less_one(c_height-1) + 1;			
+				abv = ( (abv - cap_) / bf ) + cap_less_one_ + 1;			
 			} 
 		}
+        cap_less_one_ -= pow(bf, c_height-1);
+        cap_ -= pow(bf, c_height);
 		c_height--;
 	}
 
@@ -1343,8 +1355,6 @@ void end_test() {
 
 
 void tree_test_code() {
-    using namespace std::chrono;
-
     //Test insert
     begin_test();
 	Tree tree0 = Tree();
