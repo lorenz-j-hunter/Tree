@@ -49,7 +49,7 @@ Tree& Tree::operator=(Tree& other) {
 
 //functions
 
-//Insert a data into the tree. Will insert to the first void space encountered via use of DFS in a breadth-first, iterative manner.
+//Insert a data into the tree to the first void space.
 void Tree::insert(double data) {
     auto start = steady_clock::now();
 	//root case
@@ -65,7 +65,7 @@ void Tree::insert(double data) {
 	const int orig_unq = this->unq_;
 	int bf = this->branching_factor_;
 	//calculate ch
-	int ch;
+	int ch = 0; 
 	int a = 0;
 	for (int abs_ind = 0; abs_ind < this->unq_; abs_ind++) {
 		pair<double, int> data = NDFS(abs_ind);
@@ -81,9 +81,9 @@ void Tree::insert(double data) {
 		}
 
 		a++;
-	}	
-    auto end = steady_clock::now();
-    auto duration = duration_cast<microseconds>(end - start);
+	}
+	auto end = steady_clock::now();
+	auto duration = duration_cast<microseconds>(end - start);
 	int dh;
 	if (this->is_balanced(ch)) {
 		dh = ch + 1;
@@ -93,59 +93,39 @@ void Tree::insert(double data) {
 	}	
 	const int desired_depth = dh;	
 
-	const int d_abs_ind = cap_less_one(dh) + (a - cap_less_one(dh));
+	int cap_less_one_ = this->cap_less_one(dh);
+	const int d_abs_ind = cap_less_one_ + (a - cap_less_one_);
 	
-	//calculate i
-	vector<int> D; 
-	for (int n = cap_less_one(dh); n < cap(dh); n++) {
-		D.push_back(n);
-	}
-	vector<int> C;
-	for (int n = cap_less_one(dh); n < d_abs_ind; n++) {
-		C.push_back(n);
-	}
-	int x = 0;
-	int n_ssts = 0;
-	for (auto& n : C) {
-		vector<int>::iterator it = find (D.begin(), D.end(), n);
-		if (it != D.end()) {
-			x++;
-		}
-		if (x == bf) { 
-			x = 0;
-			n_ssts++;
-		}
-	}
-	n_ssts += 1;
+	//calculate i, n_ssts;
+	const int n_ssts = std::ceil((d_abs_ind - cap_less_one_) / bf) + 1;
 	int i = n_ssts;
 	//create array = A, "path"
 	vector<int> A; A.reserve(dh+1);
 	A.assign(dh+1, 0);
 
+	int cap_ = this->cap(dh);
 	int abv = -1;
-	for (int index = dh; index > 0; index--) {
+	for (int ch = dh; ch > 0; ch--) {
 		if (abv == -1) {
-			A.at(index) = d_abs_ind;
+			A.at(ch) = d_abs_ind;
 			if (ch == 1) {
 				continue;
-			} else if (ch == 2) {
-				abv = i + (cap_less_one(ch-1) - 1);
 			} else {
-				abv = i + (cap_less_one(ch-1) - 1);
-			} 
-		} else {
-			A.at(index) = abv;
-			if (ch == 1) {
-				continue;
-			} else if (ch == 2) {
-				abv = ( (abv - cap_less_one(ch)) / bf) + 1;
-			} else {
-				abv = ( (abv - cap_less_one(ch)) / bf ) + cap_less_one(ch-1) + 1;			
+				abv = n_ssts + (cap_less_one_ - 1);
 			}
+		} else {
+			A.at(ch) = abv;
+			if (ch == 1) {
+				continue;
+			} else if (ch == 2) {
+				abv = ( (abv - cap_) / bf) + 1;
+			} else {
+				abv = ( (abv - cap_) / bf ) + cap_less_one_ + 1;			
+			} 
 		}
-		ch--;
+		cap_less_one_ -= pow(bf, ch-1);
+		cap_ -= pow(bf, ch);
 	}
-
 
 	//Traverse A
 	TreeNode* prev = this->root_;
@@ -331,7 +311,8 @@ vector<double> Tree::convert() {
 void Tree::insert(double data, int desired_depth, int desired_d) {
 	//These are basic preliminaries not specific to any particular step
 	int bf = this->branching_factor_;
-	if (this->cap_less_one(desired_depth) == -1) {
+	int cap_less_one_ = this->cap_less_one(desired_depth);
+	if (cap_less_one_ == -1) {
 		cout << "Error: in Tree::insert(double, int, int): Tree::cap_less_one(desired_depth) returns -1\n";
 		return;
 	}
@@ -343,66 +324,39 @@ void Tree::insert(double data, int desired_depth, int desired_d) {
 	int dh;
 	dh = desired_depth;
 	//calculate i
-	vector<int> D; 
-	for (int n = cap_less_one(dh); n < cap(dh); n++) {
-		D.push_back(n);
-	}
-	vector<int> C;
-	for (int n = cap_less_one(dh); n < d_abs_ind; n++) {
-		C.push_back(n);
-	}
-	int x = 0;
-	int n_ssts = 0;
-	for (auto& n : C) {
-		vector<int>::iterator it = find (D.begin(), D.end(), n);
-		if (it != D.end()) {
-			x++;
-		}
-		if (x == bf) {
-			x = 0;
-			n_ssts++;
-		}
-	}
-	n_ssts += 1;
+	const int n_ssts = std::ceil((d_abs_ind - cap_less_one_) / bf) + 1;
 	int i = n_ssts;
 	//catch errors.
-	if (this->cap_less_one(dh) == -1) {
+	if (cap_less_one_ == -1) {
 		cout << "Error: in Tree::insert(double, int, int): Tree::cap_less_one(dh) returns -1\n";
 		return;
-	}
-	const int l_bnd = this->cap_less_one(dh);
-	const int u_bnd = this->cap(dh);
-	for (auto& n : C) {
-		if (n < l_bnd || n >= u_bnd) {
-			cout << "Error: Attempt to create a disconnected graph.\n\n";
-			return;
-		}
 	}
 	//create array = A, "path"
 	vector<int> A; A.reserve(dh+1);
 	A.assign(dh+1, 0);
 	A.at(dh) = d_abs_ind;
-
+	int cap_ = this->cap(dh);
 	int abv = -1;
-	for (int index = dh; index > 0; index--) {
+	for (int ch = dh; ch > 0; ch--) {
 		if (abv == -1) {
-			A.at(index) = this->unq_ - 1;
+			A.at(ch) = d_abs_ind;
 			if (ch == 1) {
 				continue;
 			} else {
-				abv = i + (cap_less_one(ch-1) - 1);
+				abv = n_ssts + (cap_less_one_ - 1);
 			}
 		} else {
-			A.at(index) = abv;
+			A.at(ch) = abv;
 			if (ch == 1) {
 				continue;
 			} else if (ch == 2) {
-				abv = ( (abv - cap_less_one(ch)) / bf) + 1;
+				abv = ( (abv - cap_) / bf) + 1;
 			} else {
-				abv = ( (abv - cap_less_one(ch)) / bf ) + cap_less_one(ch-1) + 1;			
+				abv = ( (abv - cap_) / bf ) + cap_less_one_ + 1;			
 			} 
 		}
-		ch--;
+		cap_less_one_ -= pow(bf, ch-1);
+		cap_ -= pow(bf, ch);
 	}
 	//traverse through A
 	TreeNode* prev = this->root_;
@@ -610,62 +564,43 @@ void Tree::insert(void* blank) {
 	int ch = this->height(node);
 	int bf = this->branching_factor_;
 	const int dh = ch;
-	if (this->cap_less_one(dh) == -1) {
+	int cap_less_one_ = this->cap_less_one(dh);
+	if (cap_less_one_ == -1) {
 		cout << "Error: in Tree::insert(void*): Tree::cap_less_one(dh) returns -1\n";
 		return;
 	}
-	const int desired_d = node - this->cap_less_one(dh);
-	const int d_abs_ind = this->cap_less_one(dh) + desired_d;
+	const int desired_d = node - cap_less_one_;
+	const int d_abs_ind = cap_less_one_ + desired_d;
 	//calculate i
-	vector<int> D; 
-	for (int n = cap_less_one(dh); n < cap(dh); n++) {
-		D.push_back(n);
-	}
-	vector<int> C;
-	for (int n = cap_less_one(dh); n < d_abs_ind; n++) {
-		C.push_back(n);
-	}
-	int x = 0;
-	int n_ssts = 0;
-	for (auto& n : C) {
-		vector<int>::iterator it = find (D.begin(), D.end(), n);
-		if (it != D.end()) {
-			x++;
-		}
-		if (x == bf) {
-			x = 0;
-			n_ssts++;
-		}
-	}
-	n_ssts += 1;
+	const int n_ssts = std::ceil((d_abs_ind - cap_less_one_) / bf) + 1;
 	int i = n_ssts;
 	//create array = A, "path"
 	vector<int> A; A.reserve(dh+1);
 	A.assign(dh+1, 0);
 	A.at(dh) = d_abs_ind;
-	
+	int cap_ = this->cap(dh);
 	int abv = -1;
-	for (int index = dh; index > 0; index--) {
+	for (int ch = dh; ch > 0; ch--) {
 		if (abv == -1) {
-			A.at(index) = d_abs_ind;
+			A.at(ch) = d_abs_ind;
 			if (ch == 1) {
 				continue;
 			} else {
-				abv = i + (cap_less_one(ch-1) - 1);
+				abv = n_ssts + (cap_less_one_ - 1);
 			}
 		} else {
-			A.at(index) = abv;
+			A.at(ch) = abv;
 			if (ch == 1) {
 				continue;
 			} else if (ch == 2) {
-				abv = ( (abv - cap_less_one(ch)) / bf) + 1;
+				abv = ( (abv - cap_) / bf) + 1;
 			} else {
-				abv = ( (abv - cap_less_one(ch)) / bf ) + cap_less_one(ch-1) + 1;			
+				abv = ( (abv - cap_) / bf ) + cap_less_one_ + 1;			
 			} 
 		}
-		ch--;
+		cap_less_one_ -= pow(bf, ch-1);
+		cap_ -= pow(bf, ch);
 	}
-
 	//traverse through A
 	TreeNode* prev = this->root_;
 	for (vector<int>::iterator it = A.begin() + 1; it != A.end() - 1; it++) {
@@ -929,54 +864,52 @@ pair<double, int> Tree::NDFS(int d_abs_ind) {
 	}
 	//get height of abs_index
 	const int bf = this->branching_factor_;
-	int c_height = this->height(d_abs_ind);
-	const int d_height = c_height;
+	const int dh = this->height(d_abs_ind);
+	int cap_less_one_ = this->cap_less_one(dh);
 	//get capacity
-	if (cap_less_one(d_height) == -1) {
+	if (cap_less_one_ == -1) {
 		cout << "Error: in Tree::DFS: Tree::cap_less_one(d_height) returns -1\n";
 		pair<double, int> null_p (0, -2);
 		TreeNode* null_t = new TreeNode(null_p);
 		return null_t->data_;
 	}
-	int cap_less_one_ = this->cap_less_one(d_height);
+
 	//determine n_ssts of d_abs_ind
 	const int n_ssts = std::ceil((d_abs_ind - cap_less_one_) / bf) + 1;
 	//use formula
-	vector<int> A; A.reserve(d_height+1);
-	A.assign(d_height+1, 0);
-	A.at(d_height) = d_abs_ind;
+	vector<int> A; A.reserve(dh+1);
+	A.assign(dh+1, 0);
+	A.at(dh) = d_abs_ind;
 
-	if (this->cap_less_one(c_height) == -1) {
+	if (cap_less_one_ == -1) {
 		cout << "Error: in DFS(): Tree::cap_less_one(c_height) returns -1\n";
 		pair<double, int> null_p (0, -2);
 		TreeNode* null_t = new TreeNode(null_p);
 		return null_t->data_;
 	}
 	//create A 
-	cap_less_one_ = this->cap_less_one(c_height);
-	int cap_ = this->cap(c_height);
+	int cap_ = this->cap(dh);
 	int abv = -1;
-	for (int index = d_height; index > 0; index--) {
+	for (int ch = dh; ch > 0; ch--) {
 		if (abv == -1) {
-			A.at(index) = d_abs_ind;
-			if (c_height == 1) {
+			A.at(ch) = d_abs_ind;
+			if (ch == 1) {
 				continue;
 			} else {
 				abv = n_ssts + (cap_less_one_ - 1);
 			}
 		} else {
-			A.at(index) = abv;
-			if (c_height == 1) {
+			A.at(ch) = abv;
+			if (ch == 1) {
 				continue;
-			} else if (c_height == 2) {
+			} else if (ch == 2) {
 				abv = ( (abv - cap_) / bf) + 1;
 			} else {
 				abv = ( (abv - cap_) / bf ) + cap_less_one_ + 1;			
 			} 
 		}
-        cap_less_one_ -= pow(bf, c_height-1);
-        cap_ -= pow(bf, c_height);
-		c_height--;
+		cap_less_one_ -= pow(bf, ch-1);
+		cap_ -= pow(bf, ch);
 	}
 
 	//traverse A
@@ -992,7 +925,6 @@ pair<double, int> Tree::NDFS(int d_abs_ind) {
 		} else {
 			prev = prev->subtrees_.at(traversal_index);
 		}
-
 	}
 	return prev->data_;
 }
