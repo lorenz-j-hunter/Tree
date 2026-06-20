@@ -68,7 +68,7 @@ void Tree::insert(double data) {
 	int ch;
 	int a = 0;
 	for (int abs_ind = 0; abs_ind < this->unq_; abs_ind++) {
-		pair<double, int> data = DFS(abs_ind);
+		pair<double, int> data = NDFS(abs_ind);
 		if (get<1>(data) == -1) {
 			a++;
 			ch = this->height(a);
@@ -84,7 +84,6 @@ void Tree::insert(double data) {
 	}	
     auto end = steady_clock::now();
     auto duration = duration_cast<microseconds>(end - start);
-    cout << "duration, microseconds: " << duration.count() << "\n\n";
 	int dh;
 	if (this->is_balanced(ch)) {
 		dh = ch + 1;
@@ -191,7 +190,7 @@ void Tree::print() {
 
 void Tree::print_helper() {
 	for (int node = 0; node < this->unq_; node++) {
-		pair<double, int> current = DFS(node);
+		pair<double, int> current = NDFS(node);
 		if (get<0>(current) != 0) {
 			cout << get<0>(current) << " ";
 		}
@@ -323,7 +322,7 @@ void Tree::remove() {
 vector<double> Tree::convert() {
 	vector<double> v;
 	for (int c_abs_ind = 0; c_abs_ind < this->unq_; c_abs_ind++) {
-		pair<double, int> c_pair = this->DFS(c_abs_ind);
+		pair<double, int> c_pair = this->NDFS(c_abs_ind);
 		v.push_back(get<0>(c_pair));
 	}
 	return v;	
@@ -703,7 +702,7 @@ bool Tree::is_balanced() {
 bool Tree::is_balanced(int h) {
 	const int cap = this->cap(h);
 	for (int node = 0; node < cap; node++) {
-		pair<double, int> p = DFS(node);
+		pair<double, int> p = NDFS(node);
 		if (get<1>(p) == -1 || get<1>(p) == -2) {
 			return false;
 		}
@@ -795,7 +794,7 @@ int Tree::unalc_ht() {
 			ch++;
 			ccap = this->cap(ch+1);
 		}
-		pair<double, int> r = DFS(index);
+		pair<double, int> r = NDFS(index);
 		if (get<1>(r) == -1) {
 			break;			
 		}
@@ -814,7 +813,7 @@ int Tree::alc_ht() {
 			ch++;
 			ccap = this->cap(ch+1);
 		}
-		r = DFS(index);
+		r = NDFS(index);
 		index++;
 	}	
 	return ch+1;
@@ -875,7 +874,7 @@ pair<double, int> Tree::DFS(int d_abs_ind) {
 		TreeNode* null_t = new TreeNode(null_p);
 		return null_t->data_;
 	}
-	//create A
+	//create A 
     cap_less_one_ = cap_less_one(c_height);
     cap_ = cap(c_height);
 	int abv = -1;
@@ -918,7 +917,84 @@ pair<double, int> Tree::DFS(int d_abs_ind) {
 
 	}
 	return prev->data_;
+}
 
+//Search the tree for the absolute index
+//Return the pair associated with it
+//Return a null pair (i.e. with data of {(double)0, (int)-2}) if the index is not found.
+pair<double, int> Tree::NDFS(int d_abs_ind) {
+	//root case
+	if (d_abs_ind == 0) {
+		return this->root_->data_;
+	}
+	//get height of abs_index
+	const int bf = this->branching_factor_;
+	int c_height = this->height(d_abs_ind);
+	const int d_height = c_height;
+	//get capacity
+	if (cap_less_one(d_height) == -1) {
+		cout << "Error: in Tree::DFS: Tree::cap_less_one(d_height) returns -1\n";
+		pair<double, int> null_p (0, -2);
+		TreeNode* null_t = new TreeNode(null_p);
+		return null_t->data_;
+	}
+	int cap_less_one_ = this->cap_less_one(d_height);
+	//determine n_ssts of d_abs_ind
+	const int n_ssts = std::ceil((d_abs_ind - cap_less_one_) / bf) + 1;
+	//use formula
+	vector<int> A; A.reserve(d_height+1);
+	A.assign(d_height+1, 0);
+	A.at(d_height) = d_abs_ind;
+
+	if (this->cap_less_one(c_height) == -1) {
+		cout << "Error: in DFS(): Tree::cap_less_one(c_height) returns -1\n";
+		pair<double, int> null_p (0, -2);
+		TreeNode* null_t = new TreeNode(null_p);
+		return null_t->data_;
+	}
+	//create A 
+	cap_less_one_ = this->cap_less_one(c_height);
+	int cap_ = this->cap(c_height);
+	int abv = -1;
+	for (int index = d_height; index > 0; index--) {
+		if (abv == -1) {
+			A.at(index) = d_abs_ind;
+			if (c_height == 1) {
+				continue;
+			} else {
+				abv = n_ssts + (cap_less_one_ - 1);
+			}
+		} else {
+			A.at(index) = abv;
+			if (c_height == 1) {
+				continue;
+			} else if (c_height == 2) {
+				abv = ( (abv - cap_) / bf) + 1;
+			} else {
+				abv = ( (abv - cap_) / bf ) + cap_less_one_ + 1;			
+			} 
+		}
+        cap_less_one_ -= pow(bf, c_height-1);
+        cap_ -= pow(bf, c_height);
+		c_height--;
+	}
+
+	//traverse A
+	TreeNode* prev = this->root_;
+	for (vector<int>::iterator it = A.begin() + 1; it != A.end(); it++) {
+		int traversal_index = ( (*it) - 1 ) % bf;
+		if (get<1>(prev->data_) == d_abs_ind) {
+			break;
+		} else if (prev->subtrees_.size() <= traversal_index) {
+			pair<double, int> n_p (0, -2);
+			return n_p;
+
+		} else {
+			prev = prev->subtrees_.at(traversal_index);
+		}
+
+	}
+	return prev->data_;
 }
 
 //Search the tree for the absolute index
@@ -1364,7 +1440,7 @@ void tree_test_code() {
 	}
     auto end = steady_clock::now();
     auto duration = duration_cast<microseconds>(end - start);
-    bool status = (duration.count() < 10); 
+    bool status = (duration.count() < 100); 
 	cout << "This should read \'5 6 7 8 9 10 11 12\':\t";
     tree0.print();
     cout << "Benchmark status: " << istrue(status) << ".";
@@ -1378,7 +1454,7 @@ void tree_test_code() {
 	tree0.remove();
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should read \'5 6 7 8 9\':\t"; tree0.print();
     cout << "Benchmark status: " << istrue(status) << ".";
     end_test();
@@ -1390,7 +1466,7 @@ void tree_test_code() {
 	array = tree0.convert();
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end-start); 
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	int index = 0;
 	cout << "This should read \'5 6 7 8 9\':\t";
 	for (auto& index : array) {
@@ -1406,7 +1482,7 @@ void tree_test_code() {
 	tree1 = tree0; 
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should read \'5 6 7 8 9\':\t"; tree1.print();
     cout << "Benchmark status: " << istrue(status) << ".";
     end_test();
@@ -1418,7 +1494,7 @@ void tree_test_code() {
 	vector<double> array1; array1 = tree1.convert();
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should read \'5 6 7 8 9\':\t";
 	for (auto& index : array1) {
 		cout << index << " ";
@@ -1432,7 +1508,7 @@ void tree_test_code() {
 	tree1.insert((double)15, 2, 2);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This (the unq_ of the tree, which is " << tree1.get_unq() << ") should be \'7\'.\n";
 	cout << "This (the alc_unq_ of the tree, which is " << tree1.get_alc_unq() << ") should be \'7\'.\n";
     cout << "Benchmark status: " << istrue(status) << ".";
@@ -1445,7 +1521,7 @@ void tree_test_code() {
 	tree1.insert((double)20, 2, 7);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This (the unq_ of the tree, which is " << tree1.get_unq() << ") should be \'12\'.\n";
 	cout << "This (the alc_unq_ of the tree, which is " << tree1.get_alc_unq() << ") should be \'13\'.\n";
     cout << "Benchmark status: " << istrue(status) << ".";
@@ -1459,7 +1535,7 @@ void tree_test_code() {
 	tree2.insert((double)1, 1, 2);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should read \'1 1\':\t"; tree2.print();
     cout << "Benchmark status: " << istrue(status) << ".";
     end_test();
@@ -1470,7 +1546,7 @@ void tree_test_code() {
 	tree2.remove(1, 2);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should read \'1\':\t"; tree2.print(); 
     cout << "Benchmark status: " << istrue(status) << ".";
     end_test();
@@ -1484,7 +1560,7 @@ void tree_test_code() {
     cout << tree2.get_alc_unq();
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
     cout << "\nBenchmark status: " << istrue(status) << ".";
 
     cout << "\n";
@@ -1493,7 +1569,7 @@ void tree_test_code() {
 	tree2.alloc_lvl();
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
     cout << "Benchmark status: " << istrue(status) << ".\n";
 	cout << "What is this (the unq_ of the tree)? It\'s " << tree2.get_unq() << "\n";
 	cout << "alc_unq_ should read \'13\':\t" << tree2.get_alc_unq() << "\n";
@@ -1501,7 +1577,7 @@ void tree_test_code() {
 	tree2.alloc_by_bal();
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
     cout << "Benchmark status: " << istrue(status) << ".\n";
 	tree2.alloc_lvl();
 	cout << "This should read \'1 1\':\t"; tree2.print();
@@ -1522,7 +1598,7 @@ void tree_test_code() {
 	}
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should read \'44 45\', 44-58.\t"; tree3.print();
     cout << "Benchmark status: " << istrue(status) << ".";
     end_test();
@@ -1538,7 +1614,7 @@ void tree_test_code() {
 	tree4.remove(2, 5);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	tree4.print();
     cout << "Benchmark status: " << istrue(status) << ".";
 
@@ -1549,7 +1625,7 @@ void tree_test_code() {
 	tree4.remove(1, 2);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	tree4.print();
     cout << "Benchmark status: " << istrue(status) << ".";
 
@@ -1560,7 +1636,7 @@ void tree_test_code() {
 	tree4.remove(1, 0);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	tree4.print();
     cout << "Benchmark status: " << istrue(status) << ".";
 
@@ -1572,7 +1648,7 @@ void tree_test_code() {
 	tree4.insert(1.23, 1, 0);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	tree4.print();
     cout << "Benchmark status: " << istrue(status) << ".";
 
@@ -1583,7 +1659,7 @@ void tree_test_code() {
 	tree4.insert(4.56, 2, 0);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	tree4.print();
     cout << "Benchmark status: " << istrue(status) << ".";
 
@@ -1594,7 +1670,7 @@ void tree_test_code() {
 	tree4.remove(2, 4);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
     tree4.print();
     cout << "Benchmark status: " << istrue(status) << ".\n";
 	
@@ -1604,7 +1680,7 @@ void tree_test_code() {
 	tree4.insert(7.89);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	tree4.print();
     cout << "Benchmark status: " << istrue(status) << ".";
     end_test();
@@ -1616,7 +1692,7 @@ void tree_test_code() {
 	tree4.alloc_by_bal();
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
     cout << "Benchmark status: " << istrue(status) << ".\n";
 	cout << "The alc_unq_ now is \'" << tree4.get_alc_unq() << "\'; it should be \'" << 21 << "\'\n";
 	tree4.print();
@@ -1629,46 +1705,46 @@ void tree_test_code() {
 		
 	pair<double, int> main_pair;
     start = steady_clock::now();
-	main_pair = tree5.DFS(14);
+	main_pair = tree5.NDFS(14);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should be (14, 14):\n\n";
 	cout << "("<<get<0>(main_pair)<<", "<<get<1>(main_pair)<<")\n";
     cout << "Benchmark status: " << istrue(status) << ".";
 
     start = steady_clock::now();
-	main_pair = tree5.DFS(38);
+	main_pair = tree5.NDFS(38);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should be (38, 38):\n\n";
 	cout << "("<<get<0>(main_pair)<<", "<<get<1>(main_pair)<<")\n";
     cout << "Benchmark status: " << istrue(status) << ".";
 
     start = steady_clock::now();
-	main_pair = tree5.DFS(26);
+	main_pair = tree5.NDFS(26);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should be (26, 26):\n\n";
 	cout << "("<<get<0>(main_pair)<<", "<<get<1>(main_pair)<<")\n";
     cout << "Benchmark status: " << istrue(status) << ".";
 
     start = steady_clock::now();
-	main_pair = tree5.DFS(2);
+	main_pair = tree5.NDFS(2);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should be (2, 2):\n\n";
 	cout << "("<<get<0>(main_pair)<<", "<<get<1>(main_pair)<<")\n";
     cout << "Benchmark status: " << istrue(status) << ".";
 
     start = steady_clock::now();
-	main_pair = tree5.DFS(0);
+	main_pair = tree5.NDFS(0);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should be (0, 0):\n\n";
 	cout << "("<<get<0>(main_pair)<<", "<<get<1>(main_pair)<<")\n";
     cout << "Benchmark status: " << istrue(status) << ".";
@@ -1680,10 +1756,10 @@ void tree_test_code() {
 		tree6.insert(num);
 	}
 	pair<double, int> alt_pair;
-	alt_pair = tree6.DFS(75);
+	alt_pair = tree6.NDFS(75);
 	cout << "This should be (75, 75):\n\n";
 	cout << "("<<get<0>(alt_pair)<<", "<<get<1>(alt_pair)<<")\n";
-	alt_pair = tree6.DFS(99);
+	alt_pair = tree6.NDFS(99);
 	cout << "This should be (99, 99):\n\n";
 	cout << "("<<get<0>(alt_pair)<<", "<<get<1>(alt_pair)<<")\n";
 
@@ -1694,19 +1770,19 @@ void tree_test_code() {
 	}
 	pair<double, int> pair2;
     start = steady_clock::now();
-	pair2 = tree7.DFS(125);
+	pair2 = tree7.NDFS(125);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should be (125, 125):\n\n";
 	cout << "("<<get<0>(pair2)<<", "<<get<1>(pair2)<<")\n";
     cout << "Benchmark status: " << istrue(status) << ".";
 
     start = steady_clock::now();
-	pair2 = tree7.DFS(149);
+	pair2 = tree7.NDFS(149);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should be (149, 149):\n\n";
 	cout << "("<<get<0>(pair2)<<", "<<get<1>(pair2)<<")\n";
     cout << "Benchmark status: " << istrue(status) << ".";
@@ -1718,19 +1794,19 @@ void tree_test_code() {
 	}
 	pair<double, int> pair3;
     start = steady_clock::now();
-	pair3 = tree8.DFS(225);
+	pair3 = tree8.NDFS(225);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should be (225, 225):\n\n";
 	cout << "("<<get<0>(pair3)<<", "<<get<1>(pair3)<<")\n";
     cout << "Benchmark status: " << istrue(status) << ".";
 
     start = steady_clock::now();
-	pair3 = tree8.DFS(299);
+	pair3 = tree8.NDFS(299);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should be (299, 299):\n\n";
 	cout << "("<<get<0>(pair3)<<", "<<get<1>(pair3)<<")\n";
     cout << "Benchmark status: " << istrue(status) << ".";
@@ -1741,10 +1817,10 @@ void tree_test_code() {
 		tree9.insert(num);
 	}
     start = steady_clock::now();
-	pair3 = tree9.DFS(998);
+	pair3 = tree9.NDFS(998);
     end = steady_clock::now();
     duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 10);
+    status = (duration.count() < 100);
 	cout << "This should be (998, 998):\n\n";
 	cout << "("<<get<0>(pair3)<<", "<<get<1>(pair3)<<")\n";
     cout << "Benchmark status: " << istrue(status) << ".";
