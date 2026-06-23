@@ -38,6 +38,37 @@ def choose(d_abs_ind=5):
   """Wrapper for DFS."""
   DFS(d_abs_ind) 
 
+def see(bf: int, blw: int, cur: int) -> bool:
+  """See if `blw` is a valid subindex of `cur` of a tree with some `bf`."""
+  h_blw = height(bf=bf, index=blw)
+  h_cur = height(bf=bf, index=cur)
+  clo_blw = clo(bf=bf, h=h_blw)
+  clo_cur = clo(bf=bf, h=h_cur)
+  # case 1
+  if h_blw is not h_cur+1:
+    print(f'First case failed')
+    return False
+  r_blw: float = (blw - clo_blw) / pow(bf, h_blw)
+  r_cur: float = (cur - clo_cur) / pow(bf, h_cur)
+  begin = math.floor((cur - clo_cur) / pow(bf, h_cur-1)) * pow(bf, h_cur) # begin
+  end = begin + bf # end of range
+  r_begin = begin / pow(bf, h_blw)
+  r_end = end / pow(bf, h_blw)
+  # case 2
+  if r_end == 1:
+    if not (r_blw <= r_end and r_blw >= r_begin):
+      print(f'Second case failed.\n\nr_blw={r_blw}\tr_cur={r_cur}\tbegin={begin}\n\nend={end}\tr_begin={r_begin}\tr_end={r_end}')
+      return False
+  elif r_begin == 0:
+    if not (r_blw < r_end and r_blw >= r_begin):
+      print(f'Second case failed.\n\nr_blw={r_blw}\tr_cur={r_cur}\tbegin={begin}\n\nend={end}\tr_begin={r_begin}\tr_end={r_end}')
+      return False
+  else:
+    if not (r_blw < r_end and r_blw >= r_begin):
+      print(f'Second case failed.\n\nr_blw={r_blw}\tr_cur={r_cur}\tbegin={begin}\n\nend={end}\tr_begin={r_begin}\tr_end={r_end}')
+      return False
+  return True 
+
 def DFS(d_abs_ind=5):
   """Run all tests."""
   bf = 3
