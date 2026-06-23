@@ -54,13 +54,12 @@ def DFS(d_abs_ind=5):
   cap_: int = 1 
   begin_statement()
   for ch in range(1, dh+1):
-    cap_ += pow(bf, ch);
+    cap_ += pow(bf, ch)
     if blw == -1:
       print(f'ch={ch}')
       clo_ += pow(bf, ch-1)
       # base case: future == -1
 
-      # find frame 
       d: float = d_abs_ind - cap_less_one
       frame: int = pow(bf, dh-1)
       offst: int = math.floor(d / frame) * frame
@@ -70,8 +69,8 @@ def DFS(d_abs_ind=5):
       addition: int = math.floor(r / (1 / bf))
 
       # create blw
-      sst: int = pow((offset / bf), ch/dh) * frame
-      blw: int = cap_ + sst + addition
+      sst: int = pow(addition*frame, (ch/dh))
+      blw: int = clo_ + sst + addition
       print(f'trav_index={(blw-1) % bf}')
       if ch == dh:
         break
