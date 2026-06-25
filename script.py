@@ -39,9 +39,15 @@ def height(bf: int, index: int) -> int:
   
   return ret
 
-def choose(d_abs_ind=5):
+def choose(d_abs_ind=5) -> bool:
   """Wrapper for DFS."""
-  DFS(d_abs_ind) 
+  val: bool = DFS(d_abs_ind) 
+  return val
+
+def choose_no_print(d_abs_ind=5) -> bool:
+  """Wrapper for DFS."""
+  val: bool = DFS_no_print(d_abs_ind) 
+  return val
 
 def see(bf: int, blw: int, cur: int) -> bool:
   """See if `blw` is a valid subindex of `cur` of a tree with some `bf`."""
@@ -56,10 +62,13 @@ def see(bf: int, blw: int, cur: int) -> bool:
     return False
   r_blw: float = (blw - clo_blw) / pow(bf, h_blw)
   r_cur: float = (cur - clo_cur) / pow(bf, h_cur)
-  begin = math.floor(r_cur / (1 / pow(bf, h_cur))) * bf
+  begin = math.floor(r_cur * pow(bf, h_cur)) * bf
   end = begin + bf # end of range
-  r_begin = begin / pow(bf, h_blw)
-  r_end = end / pow(bf, h_blw)
+  multiple = bf / pow(bf, h_blw) # fit it to a predetermined range
+  r_begin = math.floor(begin / multiple) * pow(bf, h_blw)
+  r_end = r_begin + multiple 
+  #r_begin = begin / pow(bf, h_blw)
+  #r_end = end / pow(bf, h_blw)
   # case 2
   if r_end == 1:
     if not (r_blw <= r_end and r_blw >= r_begin):
@@ -78,6 +87,8 @@ def see(bf: int, blw: int, cur: int) -> bool:
             end={end}\tr_begin={r_begin}\tr_end={r_end}''')
       return False
   else:
+    if (r_blw == 0 and r_begin > r_blw):
+      return True
     if not (r_blw < r_end and r_blw >= r_begin):
       print(f'\tsee(bf={bf}, blw={blw}, cur={cur}) returns False')
       print(f'''Second case failed.\n\n
@@ -87,7 +98,53 @@ def see(bf: int, blw: int, cur: int) -> bool:
   print(f'\tsee(bf={bf}, blw={blw}, cur={cur}) returns True')
   return True
 
-def DFS(d_abs_ind=5):
+def see_no_print(bf: int, blw: int, cur: int) -> bool:
+  """See if `blw` is a valid subindex of `cur` of a tree with some `bf`."""
+  h_blw = height(bf=bf, index=blw)
+  h_cur = height(bf=bf, index=cur)
+  clo_blw = clo(bf=bf, h=h_blw)
+  clo_cur = clo(bf=bf, h=h_cur)
+  # case 1
+  if h_blw is not h_cur+1:
+    #print(f'\tsee(bf={bf}, blw={blw}, cur={cur}) returns False')
+    #print(f'\tFirst case failed')
+    return False
+  r_blw: float = (blw - clo_blw) / pow(bf, h_blw)
+  r_cur: float = (cur - clo_cur) / pow(bf, h_cur)
+  begin = math.floor(r_cur * pow(bf, h_cur)) * bf
+  end = begin + bf # end of range
+  r_begin = begin / pow(bf, h_blw)
+  r_end = end / pow(bf, h_blw)
+  # case 2
+  if r_end == 1:
+    if not (r_blw <= r_end and r_blw >= r_begin):
+      #print(f'\tsee(bf={bf}, blw={blw}, cur={cur}) returns False')
+      #print(f'''
+      #      Second case failed.\n\n
+      #      r_blw={r_blw}\tr_cur={r_cur}\tbegin={begin}\n\n
+      #      end={end}\tr_begin={r_begin}\tr_end={r_end}
+      #      ''')
+      return False
+  elif r_begin == 0:
+    if not (r_blw < r_end and r_blw >= r_begin):
+      #print(f'\tsee(bf={bf}, blw={blw}, cur={cur}) returns False')
+      #print(f'''Second case failed.\n\n
+      #      r_blw={r_blw}\tr_cur={r_cur}\tbegin={begin}\n\n
+      #      end={end}\tr_begin={r_begin}\tr_end={r_end}''')
+      return False
+  else:
+    if (r_blw == 0 and r_begin > r_blw):
+      return True
+    if not (r_blw < r_end and r_blw >= r_begin):
+      #print(f'\tsee(bf={bf}, blw={blw}, cur={cur}) returns False')
+      #print(f'''Second case failed.\n\n
+      #      r_blw={r_blw}\tr_cur={r_cur}\tbegin={begin}\n\n
+      #      end={end}\tr_begin={r_begin}\tr_end={r_end}''')
+      return False
+  #print(f'\tsee(bf={bf}, blw={blw}, cur={cur}) returns True')
+  return True
+
+def DFS(d_abs_ind=5) -> bool:
   """Run all tests."""
   bf = 3
   dh = height(bf=bf, index=d_abs_ind) 
@@ -148,6 +205,7 @@ def DFS(d_abs_ind=5):
       near_begin = math.floor(r_cur * pow(bf, ch)) * bf # begin of range
       near_end = near_begin + bf # end of valid range
 
+
       """Hone in."""
       # find frame
       frame: int = pow(bf, (dh-ch+1)) # far
@@ -178,10 +236,95 @@ def DFS(d_abs_ind=5):
       future = addition * pow(bf, (dh-ch)) # far
       offset += future # far
   end_statement()
+  return True
+
+def DFS_no_print(d_abs_ind=5) -> bool:
+  """Run all tests."""
+  bf = 3
+  dh = height(bf=bf, index=d_abs_ind) 
+  cap_less_one = clo(bf=bf, h=dh)
+  future: int = -1
+  offset: int = 0
+  clo_: int = 0 
+  blw: int = -1
+  cap_: int = 0 
+  cur: int = 0
+  for ch in range(1, dh+1):
+    if blw == -1:
+      clo_ = 1 
+      cap_ = 1 + bf
+      # base case: future == -1
+
+      """Create valid traversal indices."""
+      # create cur
+      cur = math.floor( ((d_abs_ind - cap_less_one) / pow(bf, dh)) / (1 / bf) ) + 1
+      r_cur: float = (cur - clo_ + 1) / pow(bf, ch)
+      near_begin = math.floor(r_cur / (1 / pow(bf, ch))) * bf # begin of range
+      near_end = near_begin + bf
+
+      # traverse to cur here.
+      blw = 0
+
+      if ch == dh:
+        break
+      # create offst, future
+      d: float = d_abs_ind - cap_less_one
+      frame: int = pow(bf, dh-1)
+      offset = math.floor(d / frame) * frame
+      future = offset
+
+      clo_ = 0
+      cap_ = 1 
+
+    else:
+      # ch is currently that for blw, not cur.
+      # recursive: future > 0
+      cap_ += pow(bf, ch-1) # same lvl as cur, currently.
+      clo_ += pow(bf, ch-2) # same lvl as cur, currently.
+
+      """Find valid traversal index range."""
+      # create valid traversal range.
+      r_cur: float = (cur - clo_) / pow(bf, ch) # near
+      near_begin = math.floor(r_cur * pow(bf, ch)) * bf # begin of range
+      near_end = near_begin + bf # end of valid range
+
+
+      """Hone in."""
+      # find frame
+      frame: int = pow(bf, (dh-ch+1)) # far
+      end = offset + frame  # far
+
+      # hone in with a ratio.
+      r = (d_abs_ind - cap_less_one - offset) / (end - offset) # far
+      addition: int = math.floor(r * bf) # near
+
+      """Select a valid index"""
+      # valid index is 'addition'.
+      blw = cap_ + near_begin + addition # near
+
+      # create blw, trav_index
+
+      val: bool = see_no_print(bf=bf, blw=blw, cur=cur)
+
+      if (ch == dh):
+        if val == False:
+          print(f'''blw={blw}\tcur={cur}\tr_cur={r_cur}\tnear_begin={near_begin}\toffset={offset}\tcap_={cap_}\taddition={addition}\td_abs_ind={d_abs_ind}''')
+      # future 
+      cur = blw
+      future = addition * pow(bf, (dh-ch)) # far
+      offset += future # far
+  return True
 
 def main():
-  d_abs_ind: int = int(input("Enter d_abs_ind:\t"))
-  choose(d_abs_ind)
+  choice: bool = bool(
+    1==1 if 'True' == input("Entered desired type (True for Single, False for Many)\t")
+    else 1==0)
+  if choice == True:
+    d_abs_ind: int = int(input("Enter desired index:\t"))
+    choose(d_abs_ind=d_abs_ind)
+  elif choice == False:
+    for i in range(1500):
+      choose_no_print(d_abs_ind=i)
 
 if __name__=="__main__":
   main()
