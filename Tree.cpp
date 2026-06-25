@@ -847,7 +847,7 @@ pair<double, int> Tree::NDFS(int d_abs_ind) {
 	//get height of abs_index
 	const int bf = this->branching_factor_;
 	const int dh = this->height(d_abs_ind);
-	int cap_less_one_ = this->cap_less_one(dh);
+	const int cap_less_one_ = this->cap_less_one(dh);
 	//get capacity
 	if (cap_less_one_ == -1) {
 		cout << "Error: in Tree::DFS: Tree::cap_less_one(d_height) returns -1\n";
@@ -856,8 +856,6 @@ pair<double, int> Tree::NDFS(int d_abs_ind) {
 		return null_t->data_;
 	}
 
-	//determine n_ssts of d_abs_ind
-	int n_ssts = std::ceil((d_abs_ind - cap_less_one_) / bf) + 1;
 	//use formula
 	vector<int> A; A.reserve(dh+1);
 	A.assign(dh+1, 0);
@@ -870,36 +868,82 @@ pair<double, int> Tree::NDFS(int d_abs_ind) {
 		return null_t->data_;
 	}
 	//create and traverse path 
-	int cap_ = 1 + bf;
-	int blw = -1;
-	int future = -1;
-	int offset = 0;
+  int future = -1;
+  int offset = 0;
+  int clo_ = 0;
+  int blw = -1;
+  int cap_ = 0;
+  int cur = 0;
 	TreeNode* cur = this->root_;
-	for (int ch = 1; ch <= dh; ch++) {
-		if (blw == -1) {
-			float d = (d_abs_ind - cap_less_one_);
-			float div = pow(bf, (dh-1)); //ch=1
-			blw = std::floor(d / div) + 1;
-			cout << "blw=" << blw << "d_abs_ind=" << d_abs_ind << "\n";
-			future = (blw - 1) * div;
-			int trav_index = (blw - 1) % bf;
+  for (int ch = 1; ch <= dh; ch++) {
+    if (blw == -1) {
+      clo_ = 1; 
+      cap_ = 1 + bf;
+      // base case: future == -1
+
+      /*Create valid traversal indices.*/
+      // create cur
+      cur = floor( ((d_abs_ind - cap_less_one) / pow(bf, dh)) / (1 / bf) ) + 1;
+      float r_cur = (cur - clo_ + 1) / pow(bf, ch);
+      int near_begin = floor(r_cur / (1 / pow(bf, ch))) * bf; // begin of range
+      int near_end = near_begin + bf; //end of range
+
+      // traverse to cur here.
+			int trav_index = (cur - 1) % bf;
 			cur = cur->subtrees_.at(trav_index);
-		} else {
-			if (ch == dh) {
+
+      blw = 0;
+
+      if (ch == dh) {
 				break;
 			}
-			offset += future;
-			int p_rge = pow(bf, (dh-ch+1)); //possible range
-			int end = offset + p_rge; 
-			float r = (d_abs_ind - cap_less_one_ - offset) / (end - offset);
-			float div = 1 / bf;
-			int addition = std::floor(r / div);
-			//offset / p_rge == subset length. l_ssts * pow(bf, ch-1) == l_ssts * n_ssts.
-			blw = cap_ + (offset / p_rge * bf) + addition; 
-			int trav_index = blw % bf;
+      // create offst, future
+      float d = d_abs_ind - cap_less_one_;
+      int frame = pow(bf, dh-1);
+      offset = floor(d / frame) * frame;
+      future = offset;
+
+      clo_ = 0;
+      cap_ = 1;
+
+		} else {
+      // ch is currently that for blw, not cur.
+      // recursive: future > 0
+      cap_ += pow(bf, ch-1); // same lvl as cur, currently.
+      clo_ += pow(bf, ch-2); // same lvl as cur, currently.
+
+      /*Find valid traversal index range.*/
+      // create valid traversal range.
+      float r_cur = (cur - clo_) / pow(bf, ch); // near
+      int near_begin = floor(r_cur * pow(bf, ch)) * bf; // begin of range
+      int near_end = near_begin + bf; // end of valid range
+
+
+      /*Hone in.*/
+      // find frame
+      int frame = pow(bf, (dh-ch+1)); // far
+      int end = offset + frame; // far
+
+      // hone in with a ratio.
+      float r = (d_abs_ind - cap_less_one - offset) / (end - offset); // far
+      int addition = floor(r * bf); // near
+
+      /*Select a valid index*/
+      // valid index is 'addition'.
+      if (ch == dh) {
+        blw = cap_ + offset + addition // near
+			} else {
+        blw = cap_ + near_begin + addition // near
+			}
+
+			//traverse to blw.
+			int trav_index = (blw - 1) % bf;
 			cur = cur->subtrees_.at(trav_index);
-			future = addition * pow(bf, (dh-ch)); //# ssts * sst length
-			cap_ += pow(bf, ch-1);
+
+      // future 
+      cur = blw;
+      future = addition * pow(bf, (dh-ch)); // far
+      offset += future; // far
 		}
 	}
 	return cur->data_;

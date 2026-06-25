@@ -113,8 +113,11 @@ def see_no_print(bf: int, blw: int, cur: int) -> bool:
   r_cur: float = (cur - clo_cur) / pow(bf, h_cur)
   begin = math.floor(r_cur * pow(bf, h_cur)) * bf
   end = begin + bf # end of range
-  r_begin = begin / pow(bf, h_blw)
-  r_end = end / pow(bf, h_blw)
+  multiple = bf / pow(bf, h_blw) # fit it to a predetermined range
+  r_begin = math.floor(begin / multiple) * pow(bf, h_blw)
+  r_end = r_begin + multiple 
+#  r_begin = begin / pow(bf, h_blw)
+#  r_end = end / pow(bf, h_blw)
   # case 2
   if r_end == 1:
     if not (r_blw <= r_end and r_blw >= r_begin):
@@ -300,7 +303,10 @@ def DFS_no_print(d_abs_ind=5) -> bool:
 
       """Select a valid index"""
       # valid index is 'addition'.
-      blw = cap_ + near_begin + addition # near
+      if ch == dh:
+        blw = cap_ + offset + addition # near
+      else:
+        blw = cap_ + near_begin + addition # near
 
       # create blw, trav_index
 
