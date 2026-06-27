@@ -267,7 +267,7 @@ def DFS_no_print(d_abs_ind=5) -> bool:
 
       # traverse to cur here.
       blw = 0
-
+      print_no_newline(f'blw={blw}\tcur={cur}\n')
       if ch == dh:
         break
       # create offst, future
@@ -309,12 +309,16 @@ def DFS_no_print(d_abs_ind=5) -> bool:
         blw = cap_ + near_begin + addition # near
 
       # create blw, trav_index
+      print_no_newline(f'blw={blw}\tcur={cur}\n')
 
       val: bool = see_no_print(bf=bf, blw=blw, cur=cur)
 
-      if (ch == dh):
-        if val == False:
-          print(f'''blw={blw}\tcur={cur}\tr_cur={r_cur}\tnear_begin={near_begin}\toffset={offset}\tcap_={cap_}\taddition={addition}\td_abs_ind={d_abs_ind}''')
+      if (ch == dh and val == False):
+        if (blw == d_abs_ind):
+          pass
+        else:
+          print(f'Error')
+
       # future 
       cur = blw
       future = addition * pow(bf, (dh-ch)) # far
@@ -329,7 +333,7 @@ def main():
     d_abs_ind: int = int(input("Enter desired index:\t"))
     choose(d_abs_ind=d_abs_ind)
   elif choice == False:
-    for i in range(1500):
+    for i in range(10_000):
       choose_no_print(d_abs_ind=i)
 
 if __name__=="__main__":

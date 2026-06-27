@@ -51,7 +51,6 @@ Tree& Tree::operator=(Tree& other) {
 
 //Insert a data into the tree to the first void space.
 void Tree::insert(double data) {
-    auto start = steady_clock::now();
 	//root case
 	if (this->root_ == NULL) {
 		pair<double, int> new_pair (data, this->unq_);
@@ -64,66 +63,124 @@ void Tree::insert(double data) {
 	//DFS algorithm here.
 	const int orig_unq = this->unq_;
 	int bf = this->branching_factor_;
-	//calculate ch
-	int ch = 0; 
+	//calculate dh
+	int h = 0; 
 	int a = 0;
 	for (int abs_ind = 0; abs_ind < this->unq_; abs_ind++) {
 		pair<double, int> data = NDFS(abs_ind);
 		if (get<1>(data) == -1) {
 			a++;
-			ch = this->height(a);
+			h = this->height(a);
 			break;
 		}
 		if (abs_ind == this->unq_-1) {
 			a++;
-			ch = this->height();
+			h = this->height();
 			break;
 		}
 
 		a++;
 	}
-	auto end = steady_clock::now();
-	auto duration = duration_cast<microseconds>(end - start);
 	int dh;
-	if (this->is_balanced(ch)) {
-		dh = ch + 1;
-		ch = ch + 1;
-	} else if (!this->is_balanced(ch)) {
-		dh = ch;
+	if (this->is_balanced(h)) {
+		dh = h + 1;
+		h = h + 1;
+	} else if (!this->is_balanced(h)) {
+		dh = h;
 	}	
 	const int desired_depth = dh;	
 
 	int cap_less_one_ = this->cap_less_one(dh);
-	const int d_abs_ind = cap_less_one_ + (a - cap_less_one_);
-	//create array = A, "path", and traverse it.
-	int cap_ = 1 + bf;
-	int blw = -1;
-	int future = -1;
-	int offset = 0;
-	TreeNode* cur = this->root_;
-	for (int ch = 1; ch < dh-1; ch++) {
-		if (blw == -1) {
-			float d = (d_abs_ind - cap_less_one_);
-			float div = pow(bf, (dh-1)); //ch=1
-			blw = std::ceil(d / div) + 1;
-			future = (blw - 1) * div;
-			int trav_index = (blw - 1) % bf;
-			cur = cur->subtrees_.at(trav_index);
+	const int d_abs_ind = a;
+
+	//create and traverse path 
+  int future = -1;
+  int offset = 0;
+  int clo_ = 0;
+  int blw = -1;
+  int cap_ = 0;
+  int cur = 0;
+	TreeNode* cur_node = this->root_;
+  for (int ch = 1; ch < dh; ch++) { //stop just before index
+    if (blw == -1) {
+      clo_ = 1; 
+      cap_ = 1 + bf;
+
+      // base case: future == -1
+
+			double bf_d = static_cast<double>(bf);
+			double denom = 1.0 / bf_d;
+
+      /*Create valid traversal indices.*/
+      // create cur
+      cur = std::floor(((d_abs_ind - cap_less_one_) / std::pow(bf, dh)) / denom) + 1;
+
+			//determine near_begin for ch+1.
+      double r_cur = (cur - clo_ + 1) / std::pow(bf, ch);
+      double near_begin_d = std::floor(r_cur / (1 / std::pow(bf, ch))) * bf; // begin of range
+			int near_begin = static_cast<int>(near_begin_d);
+      int near_end = near_begin + bf; //end of range
+
+      // traverse to cur here.
+			int trav_index = (cur - 1) % bf;
+			cur_node = cur_node->subtrees_.at(trav_index);
+
+      blw = 0;
+			
+      if (ch == dh) {
+				break;
+			}
+      // create offst, future
+      int d = d_abs_ind - cap_less_one_;
+      int frame = pow(bf, dh-1);
+      offset = std::floor(d / frame) * frame;
+      future = offset;
+
+      clo_ = 0;
+      cap_ = 1;
+
 		} else {
-			offset += future;
-			int p_rge = pow(bf, (dh-ch+1)); //possible range
-			int end = offset + p_rge; 
-			float r = (d_abs_ind - cap_less_one_ - offset) / (end - offset);
-			float div = 1 / bf;
-			int addition = std::floor(r / div);
-			//offset / p_rge == subset length. l_ssts * pow(bf, ch-1) == l_ssts * n_ssts.
-			blw = cap_ + (offset / p_rge * bf) + addition; 
-			int trav_index = blw % bf;
-			cur = cur->subtrees_.at(trav_index);
-			future = addition * pow(bf, (dh-ch)); //# ssts * sst length
-			cap_ += pow(bf, ch-1);
+      // ch is currently that for blw, not cur.
+      // recursive: future > 0
+      cap_ += pow(bf, ch-1); // same lvl as cur, currently.
+      clo_ += pow(bf, ch-2); // same lvl as cur, currently.
+
+      /*Find valid traversal index range.*/
+      // create valid traversal range.
+      double r_cur = (cur - clo_) / std::pow(bf, ch); // near
+      double near_begin_d = std::floor(r_cur / (1 / std::pow(bf, ch))) * bf; // begin of range
+      int near_begin = static_cast<int>(near_begin_d); 
+      int near_end = near_begin + bf; // end of valid range
+
+      /*Hone in.*/
+      // find frame
+      int frame = std::pow(bf, (dh-ch+1)); // far
+      int end = offset + frame; // far
+
+      // hone in with a ratio.
+      double r = (d_abs_ind - cap_less_one_ - offset) / (end - offset); // far
+      int addition = std::floor(r * bf); // near
+
+      /*Select a valid index*/
+      // valid index is 'addition'.
+      if (ch == dh) {
+        blw = cap_ + offset + addition; // near
+			} else {
+        blw = cap_ + near_begin + addition; // near
+			}
+
+			//traverse to blw.
+			int trav_index = (blw - 1) % bf;
+
+			cur_node = cur_node->subtrees_.at(trav_index);
+
+      // future 
+      cur = blw;
+      future = addition * pow(bf, (dh-ch)); // far
+      offset += future; // far
 		}
 	}
+
 	//insert
 	int insertion_index;
 	if (d_abs_ind == this->unq_ - 1) {
@@ -133,17 +190,16 @@ void Tree::insert(double data) {
 	}
 	pair<double, int> new_pair (data, orig_unq);
 
-	if (cur->subtrees_.capacity() == 0) {
+	if (cur_node->subtrees_.capacity() == 0) {
 		for (int index = 0; index < bf; index++) {
 			pair<double, int> new_pair (0, -1);
 			TreeNode* new_node = new TreeNode(new_pair);
-			cur->subtrees_.insert(cur->subtrees_.begin(), new_node);
+			cur_node->subtrees_.insert(cur_node->subtrees_.begin(), new_node);
 		}
 	}
-	cur->subtrees_.at(insertion_index) = new TreeNode(new_pair);
+	cur_node->subtrees_.at(insertion_index) = new TreeNode(new_pair);
 	//calculate new alc_unq_
 	this->sort();
-
 	return;
 }
 
@@ -167,14 +223,12 @@ void Tree::print_helper() {
 	}
 }
 
-//Note: after each insertion or removal, the tree must be sorted with respect to abs-index.
-//Note: We are simply substituting "d_abs_ind" with "this->unq_ - 1", requiring the tree to be sorted.
+//Remove the element at this->unq_ - 1
 void Tree::remove() {
 	//root case
 	if (this->root_ == NULL) {
 		return;
 	}
-	//DFS algorithm here.
 	int bf = this->branching_factor_;
 	//calculate ch
 	int ch = this->height();
@@ -313,57 +367,109 @@ void Tree::insert(double data, int desired_depth, int desired_d) {
 	int ch = this->height(d_abs_ind);
 	int dh;
 	dh = desired_depth;
-	//calculate i
-	const int n_ssts = std::ceil((d_abs_ind - cap_less_one_) / bf) + 1;
-	int i = n_ssts;
 	//catch errors.
 	if (cap_less_one_ == -1) {
 		cout << "Error: in Tree::insert(double, int, int): Tree::cap_less_one(dh) returns -1\n";
 		return;
 	}
-	//create array = A, "path"
-	int cap_ = 1 + bf;
-	int blw = -1;
-	int future = -1;
-	int offset = 0;
-	TreeNode* cur = this->root_;
-	for (int ch = 1; ch < dh; ch++) {
-		if (blw == -1) {
-			float d = (d_abs_ind - cap_less_one_);
-			float div = pow(bf, (dh-1)); //ch=1
-			blw = std::floor(d / div) + 1;
-			future = (blw - 1) * div;
-			int trav_index = (blw - 1) % bf;
-			cur = cur->subtrees_.at(trav_index);
+	//create and traverse path 
+  int future = -1;
+  int offset = 0;
+  int clo_ = 0;
+  int blw = -1;
+  int cap_ = 0;
+  int cur = 0;
+	TreeNode* cur_node = this->root_;
+  for (int ch = 1; ch < dh; ch++) { //stop just before index
+    if (blw == -1) {
+      clo_ = 1; 
+      cap_ = 1 + bf;
+      // base case: future == -1
+
+			double bf_d = static_cast<double>(bf);
+			double denom = 1.0 / bf_d;
+
+      /*Create valid traversal indices.*/
+      // create cur
+      cur = std::floor(((d_abs_ind - cap_less_one_) / pow(bf, dh)) / denom) + 1;
+      float r_cur = (cur - clo_ + 1) / pow(bf, ch);
+      int near_begin = floor(r_cur / (1 / pow(bf, ch))) * bf; // begin of range
+      int near_end = near_begin + bf; //end of range
+
+      // traverse to cur here.
+			int trav_index = (cur - 1) % bf;
+			cur_node = cur_node->subtrees_.at(trav_index);
+
+      blw = 0;
+
+      if (ch == dh) {
+				break;
+			}
+      // create offst, future
+      float d = d_abs_ind - cap_less_one_;
+      int frame = pow(bf, dh-1);
+      offset = floor(d / frame) * frame;
+      future = offset;
+
+      clo_ = 0;
+      cap_ = 1;
+
 		} else {
-			offset += future;
-			int p_rge = pow(bf, (dh-ch+1)); //possible range
-			int end = offset + p_rge; 
-			float r = (d_abs_ind - cap_less_one_ - offset) / (end - offset);
-			float div = 1 / bf;
-			int addition = std::floor(r / div);
-			//offset / p_rge == subset length. l_ssts * pow(bf, ch-1) == l_ssts * n_ssts.
-			blw = cap_ + (offset / p_rge * bf) + addition; 
-			int trav_index = blw % bf;
-			cur = cur->subtrees_.at(trav_index);
-			future = addition * pow(bf, (dh-ch)); //# ssts * sst length
-			cap_ += pow(bf, ch-1);
+      // ch is currently that for blw, not cur.
+      // recursive: future > 0
+      cap_ += pow(bf, ch-1); // same lvl as cur, currently.
+      clo_ += pow(bf, ch-2); // same lvl as cur, currently.
+
+      /*Find valid traversal index range.*/
+      // create valid traversal range.
+      float r_cur = (cur - clo_) / pow(bf, ch); // near
+      int near_begin = floor(r_cur * pow(bf, ch)) * bf; // begin of range
+      int near_end = near_begin + bf; // end of valid range
+
+
+      /*Hone in.*/
+      // find frame
+      int frame = pow(bf, (dh-ch+1)); // far
+      int end = offset + frame; // far
+
+      // hone in with a ratio.
+      float r = (d_abs_ind - cap_less_one_ - offset) / (end - offset); // far
+      int addition = floor(r * bf); // near
+
+      /*Select a valid index*/
+      // valid index is 'addition'.
+      if (ch == dh) {
+        blw = cap_ + offset + addition; // near
+			} else {
+        blw = cap_ + near_begin + addition; // near
+			}
+
+			//traverse to blw.
+			int trav_index = (blw - 1) % bf;
+			cur_node = cur_node->subtrees_.at(trav_index);
+
+      // future 
+      cur = blw;
+      future = addition * pow(bf, (dh-ch)); // far
+      offset += future; // far
 		}
 	}
+
+
 	//insert
 	int insertion_index = (d_abs_ind - 1) % bf;
 	pair<double, int> new_pair (data, d_abs_ind);
-	if (cur->subtrees_.capacity() == 0) {
+	if (cur_node->subtrees_.capacity() == 0) {
 		for (int index = 0; index < bf; index++) {
 			pair<double, int> new_pair (0, -1);
 			TreeNode* new_node = new TreeNode(new_pair);
-			cur->subtrees_.insert(cur->subtrees_.begin(), new_node);
+			cur_node->subtrees_.insert(cur_node->subtrees_.begin(), new_node);
 		}
-	} else if (get<1>(cur->data_) == -1) {
+	} else if (get<1>(cur_node->data_) == -1) {
 		cout << "Error: in Tree::insert(double, int, int): Attempt to create a disconnected graph.\n\n";
 		return;
 	}
-	cur->subtrees_.at(insertion_index) = new TreeNode(new_pair);
+	cur_node->subtrees_.at(insertion_index) = new TreeNode(new_pair);
 	//reorder
 	this->sort();
 	return;
@@ -557,44 +663,95 @@ void Tree::insert(void* blank) {
 	}
 	const int desired_d = node - cap_less_one_;
 	const int d_abs_ind = cap_less_one_ + desired_d;
-	//calculate i
-	const int n_ssts = std::ceil((d_abs_ind - cap_less_one_) / bf) + 1;
-	int i = n_ssts;
-	//create array = A, "path"
-	int cap_ = 1 + bf;
-	int blw = -1;
-	int future = -1;
-	int offset = 0;
-	TreeNode* cur = this->root_;
-	for (int ch = 1; ch < dh-1; ch++) {
-		if (blw == -1) {
-			float d = (d_abs_ind - cap_less_one_);
-			float div = pow(bf, (dh-1)); //ch=1
-			blw = std::floor(d / div) + 1;
-			future = (blw - 1) * div;
-			int trav_index = (blw - 1) % bf;
-			cur = cur->subtrees_.at(trav_index);
+	//create and traverse path 
+  int future = -1;
+  int offset = 0;
+  int clo_ = 0;
+  int blw = -1;
+  int cap_ = 0;
+  int cur = 0;
+	TreeNode* cur_node = this->root_;
+  for (int ch = 1; ch < dh; ch++) { //stop just before index
+    if (blw == -1) {
+      clo_ = 1; 
+      cap_ = 1 + bf;
+      // base case: future == -1
+
+			double bf_d = static_cast<double>(bf);
+			double denom = 1.0 / bf_d;
+
+      /*Create valid traversal indices.*/
+      // create cur
+      cur = std::floor(((d_abs_ind - cap_less_one_) / pow(bf, dh)) / denom) + 1;
+      float r_cur = (cur - clo_ + 1) / pow(bf, ch);
+      int near_begin = floor(r_cur / (1 / pow(bf, ch))) * bf; // begin of range
+      int near_end = near_begin + bf; //end of range
+
+      // traverse to cur here.
+			int trav_index = (cur - 1) % bf;
+			cur_node = cur_node->subtrees_.at(trav_index);
+
+      blw = 0;
+
+      if (ch == dh) {
+				break;
+			}
+      // create offst, future
+      float d = d_abs_ind - cap_less_one_;
+      int frame = pow(bf, dh-1);
+      offset = floor(d / frame) * frame;
+      future = offset;
+
+      clo_ = 0;
+      cap_ = 1;
+
 		} else {
-			offset += future;
-			int p_rge = pow(bf, (dh-ch+1)); //possible range
-			int end = offset + p_rge; 
-			float r = (d_abs_ind - cap_less_one_ - offset) / (end - offset);
-			float div = 1 / bf;
-			int addition = std::floor(r / div);
-			//offset / p_rge == subset length. l_ssts * pow(bf, ch-1) == l_ssts * n_ssts.
-			blw = cap_ + (offset / p_rge * bf) + addition; 
-			int trav_index = blw % bf;
-			cur = cur->subtrees_.at(trav_index);
-			future = addition * pow(bf, (dh-ch)); //# ssts * sst length
-			cap_ += pow(bf, ch-1);
+      // ch is currently that for blw, not cur.
+      // recursive: future > 0
+      cap_ += pow(bf, ch-1); // same lvl as cur, currently.
+      clo_ += pow(bf, ch-2); // same lvl as cur, currently.
+
+      /*Find valid traversal index range.*/
+      // create valid traversal range.
+      float r_cur = (cur - clo_) / pow(bf, ch); // near
+      int near_begin = floor(r_cur * pow(bf, ch)) * bf; // begin of range
+      int near_end = near_begin + bf; // end of valid range
+
+
+      /*Hone in.*/
+      // find frame
+      int frame = pow(bf, (dh-ch+1)); // far
+      int end = offset + frame; // far
+
+      // hone in with a ratio.
+      float r = (d_abs_ind - cap_less_one_ - offset) / (end - offset); // far
+      int addition = floor(r * bf); // near
+
+      /*Select a valid index*/
+      // valid index is 'addition'.
+      if (ch == dh) {
+        blw = cap_ + offset + addition; // near
+			} else {
+        blw = cap_ + near_begin + addition; // near
+			}
+
+			//traverse to blw.
+			int trav_index = (blw - 1) % bf;
+			cur_node = cur_node->subtrees_.at(trav_index);
+
+      // future 
+      cur = blw;
+      future = addition * pow(bf, (dh-ch)); // far
+      offset += future; // far
 		}
 	}
+
 	//insert
 	int insertion_index = (d_abs_ind - 1) % bf;
 	pair<double, int> _void (0, -1);
-	if (cur->subtrees_.capacity() <= bf) {
+	if (cur_node->subtrees_.capacity() <= bf) {
 		TreeNode* b = new TreeNode(_void);
-		cur->subtrees_.insert(cur->subtrees_.begin(), b);
+		cur_node->subtrees_.insert(cur_node->subtrees_.begin(), b);
 	}
 	return;
 }
@@ -856,11 +1013,6 @@ pair<double, int> Tree::NDFS(int d_abs_ind) {
 		return null_t->data_;
 	}
 
-	//use formula
-	vector<int> A; A.reserve(dh+1);
-	A.assign(dh+1, 0);
-	A.at(dh) = d_abs_ind;
-
 	if (cap_less_one_ == -1) {
 		cout << "Error: in DFS(): Tree::cap_less_one(c_height) returns -1\n";
 		pair<double, int> null_p (0, -2);
@@ -874,29 +1026,42 @@ pair<double, int> Tree::NDFS(int d_abs_ind) {
   int blw = -1;
   int cap_ = 0;
   int cur = 0;
-	TreeNode* cur = this->root_;
+	TreeNode* cur_node = this->root_;
   for (int ch = 1; ch <= dh; ch++) {
     if (blw == -1) {
       clo_ = 1; 
       cap_ = 1 + bf;
+
+			//case 3: dh == 1
+			if (ch == dh) {
+				break;
+			}
       // base case: future == -1
+
+			double bf_d = static_cast<double>(bf);
+			double denom = 1.0 / bf_d;
 
       /*Create valid traversal indices.*/
       // create cur
-      cur = floor( ((d_abs_ind - cap_less_one) / pow(bf, dh)) / (1 / bf) ) + 1;
-      float r_cur = (cur - clo_ + 1) / pow(bf, ch);
-      int near_begin = floor(r_cur / (1 / pow(bf, ch))) * bf; // begin of range
+      cur = std::floor(((d_abs_ind - cap_less_one_) / std::pow(bf, dh)) / denom) + 1;
+      double r_cur = (cur - clo_ + 1) / std::pow(bf, ch);
+      double near_begin_d = std::floor(r_cur / (1 / std::pow(bf, ch))) * bf; // begin of range
+			int near_begin = static_cast<int>(near_begin_d);
       int near_end = near_begin + bf; //end of range
 
       // traverse to cur here.
 			int trav_index = (cur - 1) % bf;
-			cur = cur->subtrees_.at(trav_index);
+			if (cur_node->subtrees_.size() <= trav_index) {
+				pair<double, int> null_p (0, -2);
+				return null_p;
+			}
+			cur_node = cur_node->subtrees_.at(trav_index);
+			if (get<1>(cur_node->data_) == d_abs_ind) {
+				break;
+			}
 
       blw = 0;
 
-      if (ch == dh) {
-				break;
-			}
       // create offst, future
       float d = d_abs_ind - cap_less_one_;
       int frame = pow(bf, dh-1);
@@ -913,32 +1078,45 @@ pair<double, int> Tree::NDFS(int d_abs_ind) {
       clo_ += pow(bf, ch-2); // same lvl as cur, currently.
 
       /*Find valid traversal index range.*/
+			double denom = std::pow(bf, ch);
+			double bf_d = static_cast<double>(bf);
+
       // create valid traversal range.
-      float r_cur = (cur - clo_) / pow(bf, ch); // near
-      int near_begin = floor(r_cur * pow(bf, ch)) * bf; // begin of range
+      double r_cur = (cur - clo_) / denom; // near
+      double near_begin_d = std::floor(r_cur * denom) * bf; // begin of range
+			int near_begin = static_cast<int>(near_begin_d);
       int near_end = near_begin + bf; // end of valid range
 
 
       /*Hone in.*/
       // find frame
-      int frame = pow(bf, (dh-ch+1)); // far
+      double frame_d = std::pow(bf, (dh-ch+1)); // far
+			int frame = static_cast<int>(frame_d);
       int end = offset + frame; // far
 
       // hone in with a ratio.
-      float r = (d_abs_ind - cap_less_one - offset) / (end - offset); // far
-      int addition = floor(r * bf); // near
+			double num = d_abs_ind - cap_less_one_ - offset;
+      double r = num / (end - offset); // far
+      int addition = std::floor(r * bf_d); // near
 
       /*Select a valid index*/
       // valid index is 'addition'.
       if (ch == dh) {
-        blw = cap_ + offset + addition // near
+        blw = cap_ + offset + addition; // near
 			} else {
-        blw = cap_ + near_begin + addition // near
+        blw = cap_ + near_begin + addition; // near
 			}
 
 			//traverse to blw.
 			int trav_index = (blw - 1) % bf;
-			cur = cur->subtrees_.at(trav_index);
+			if (cur_node->subtrees_.size() <= trav_index) {
+				pair<double, int> null_p (0, -2);
+				return null_p;
+			}
+			cur_node = cur_node->subtrees_.at(trav_index);
+			if (get<1>(cur_node->data_) == d_abs_ind) {
+				break;
+			}
 
       // future 
       cur = blw;
@@ -946,7 +1124,14 @@ pair<double, int> Tree::NDFS(int d_abs_ind) {
       offset += future; // far
 		}
 	}
-	return cur->data_;
+
+	//case 3: d_abs_ind has h=1.
+	if (dh == 1) {
+		int trav_index = (d_abs_ind - 1) % bf;
+		cur_node = cur_node->subtrees_.at(trav_index);
+		return cur_node->data_;
+	}
+	return cur_node->data_;	
 }
 
 //Search the tree for the absolute index
@@ -1383,20 +1568,20 @@ void end_test() {
 
 
 void tree_test_code() {
-    //Test insert
-    begin_test();
+	//Test insert
+	begin_test();
 	Tree tree0 = Tree();
-    auto start = steady_clock::now();
+	auto start = steady_clock::now();
 	for (int num = 5; num < 13; num++) {
 		tree0.insert(num);
 	}
-    auto end = steady_clock::now();
-    auto duration = duration_cast<microseconds>(end - start);
-    bool status = (duration.count() < 100); 
+	auto end = steady_clock::now();
+	auto duration = duration_cast<microseconds>(end - start);
+	bool status = (duration.count() < 100); 
 	cout << "This should read \'5 6 7 8 9 10 11 12\':\t";
-    tree0.print();
-    cout << "Benchmark status: " << istrue(status) << ".";
-    end_test();
+	tree0.print();
+	cout << "Benchmark status: " << istrue(status) << ".";
+	end_test();
 	
 	//Test remove
 	begin_test();
@@ -1404,21 +1589,21 @@ void tree_test_code() {
 	tree0.remove();
 	tree0.remove();
 	tree0.remove();
-    end = steady_clock::now();
-    duration = duration_cast<microseconds>(end - start);
-    status = (duration.count() < 100);
+	end = steady_clock::now();
+	duration = duration_cast<microseconds>(end - start);
+	status = (duration.count() < 100);
 	cout << "This should read \'5 6 7 8 9\':\t"; tree0.print();
-    cout << "Benchmark status: " << istrue(status) << ".";
-    end_test();
+	cout << "Benchmark status: " << istrue(status) << ".";
+	end_test();
 	
 	//test convert()
-    begin_test();
+	begin_test();
 	vector<double> array; array.reserve(tree0.get_size()); 
-    start = steady_clock::now();
+	start = steady_clock::now();
 	array = tree0.convert();
-    end = steady_clock::now();
-    duration = duration_cast<microseconds>(end-start); 
-    status = (duration.count() < 100);
+	end = steady_clock::now();
+	duration = duration_cast<microseconds>(end-start); 
+	status = (duration.count() < 100);
 	int index = 0;
 	cout << "This should read \'5 6 7 8 9\':\t";
 	for (auto& index : array) {
