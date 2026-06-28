@@ -267,7 +267,7 @@ def DFS_no_print(d_abs_ind=5) -> bool:
 
       # traverse to cur here.
       blw = 0
-      print_no_newline(f'blw={blw}\tcur={cur}\n')
+
       if ch == dh:
         break
       # create offst, future
@@ -309,7 +309,6 @@ def DFS_no_print(d_abs_ind=5) -> bool:
         blw = cap_ + near_begin + addition # near
 
       # create blw, trav_index
-      print_no_newline(f'blw={blw}\tcur={cur}\n')
 
       val: bool = see_no_print(bf=bf, blw=blw, cur=cur)
 
