@@ -63,34 +63,22 @@ void Tree::insert(double data) {
 	//DFS algorithm here.
 	const int orig_unq = this->unq_;
 	int bf = this->branching_factor_;
-<<<<<<< HEAD
 	//calculate dh
 
 	int h = 0; 
-=======
-<<<<<<< HEAD
-	//calculate ch
-	int ch = 0; 
-=======
+
 	//calculate dh
 
 	int h = 0; 
->>>>>>> 7ed90f9 (efficiency)
->>>>>>> 61939a9 (efficiency)
+
 	int a = 0;
 	for (int abs_ind = 0; abs_ind < this->unq_; abs_ind++) {
 		pair<double, int> data = NDFS(abs_ind);
 		if (get<1>(data) == -1) {
-<<<<<<< HEAD
 			h = this->height(a);
-=======
-<<<<<<< HEAD
-			a++;
-			ch = this->height(a);
-=======
+
 			h = this->height(a);
->>>>>>> 7ed90f9 (efficiency)
->>>>>>> 61939a9 (efficiency)
+
 			break;
 		}
 		if (abs_ind == this->unq_-1) {
@@ -113,18 +101,7 @@ void Tree::insert(double data) {
 	int cap_less_one_ = this->cap_less_one(dh);
 	const int d_abs_ind = a;
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-	int cap_ = this->cap(dh);
-	int abv = -1;
-	for (int ch = dh; ch > 0; ch--) {
-		if (abv == -1) {
-			A.at(ch) = d_abs_ind;
-			if (ch == 1) {
-				continue;
-=======
->>>>>>> 61939a9 (efficiency)
+
 	//create and traverse path 
   int future = -1;
   int offset = 0;
@@ -161,8 +138,6 @@ void Tree::insert(double data) {
 			
       if (ch == dh) {
 				break;
-<<<<<<< HEAD
-=======
 			}
       // create offst, future
       int d = d_abs_ind - cap_less_one_;
@@ -200,10 +175,10 @@ void Tree::insert(double data) {
       // valid index is 'addition'.
       if (ch == dh) {
         blw = cap_ + offset + addition; // near
->>>>>>> 7ed90f9 (efficiency)
+
 			} else {
 				abv = n_ssts + (cap_less_one_ - 1);
->>>>>>> 61939a9 (efficiency)
+
 			}
       // create offst, future
       int d = d_abs_ind - cap_less_one_;
@@ -448,22 +423,7 @@ void Tree::insert(double data, int desired_depth, int desired_d) {
 		cout << "Error: in Tree::insert(double, int, int): Tree::cap_less_one(dh) returns -1\n";
 		return;
 	}
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-	//create array = A, "path"
-	vector<int> A; A.reserve(dh+1);
-	A.assign(dh+1, 0);
-	A.at(dh) = d_abs_ind;
-	int cap_ = this->cap(dh);
-	int abv = -1;
-	for (int ch = dh; ch > 0; ch--) {
-		if (abv == -1) {
-			A.at(ch) = d_abs_ind;
-			if (ch == 1) {
-				continue;
-=======
->>>>>>> 61939a9 (efficiency)
+
 	//create and traverse path 
   int future = -1;
   int offset = 0;
@@ -496,8 +456,6 @@ void Tree::insert(double data, int desired_depth, int desired_d) {
 
       if (ch == dh) {
 				break;
-<<<<<<< HEAD
-=======
 			}
       // create offst, future
       float d = d_abs_ind - cap_less_one_;
@@ -536,10 +494,10 @@ void Tree::insert(double data, int desired_depth, int desired_d) {
       // valid index is 'addition'.
       if (ch == dh) {
         blw = cap_ + offset + addition; // near
->>>>>>> 7ed90f9 (efficiency)
+
 			} else {
 				abv = n_ssts + (cap_less_one_ - 1);
->>>>>>> 61939a9 (efficiency)
+
 			}
       // create offst, future
       float d = d_abs_ind - cap_less_one_;
@@ -801,25 +759,7 @@ void Tree::insert(void* blank) {
 	}
 	const int desired_d = node - cap_less_one_;
 	const int d_abs_ind = cap_less_one_ + desired_d;
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-	//calculate i
-	const int n_ssts = std::ceil((d_abs_ind - cap_less_one_) / bf) + 1;
-	int i = n_ssts;
-	//create array = A, "path"
-	vector<int> A; A.reserve(dh+1);
-	A.assign(dh+1, 0);
-	A.at(dh) = d_abs_ind;
-	int cap_ = this->cap(dh);
-	int abv = -1;
-	for (int ch = dh; ch > 0; ch--) {
-		if (abv == -1) {
-			A.at(ch) = d_abs_ind;
-			if (ch == 1) {
-				continue;
-=======
->>>>>>> 61939a9 (efficiency)
+
 	//create and traverse path 
   int future = -1;
   int offset = 0;
@@ -852,8 +792,6 @@ void Tree::insert(void* blank) {
 
       if (ch == dh) {
 				break;
-<<<<<<< HEAD
-=======
 			}
       // create offst, future
       float d = d_abs_ind - cap_less_one_;
@@ -893,10 +831,10 @@ void Tree::insert(void* blank) {
       // valid index is 'addition'.
       if (ch == dh) {
         blw = cap_ + offset + addition; // near
->>>>>>> 7ed90f9 (efficiency)
+
 			} else {
 				abv = n_ssts + (cap_less_one_ - 1);
->>>>>>> 61939a9 (efficiency)
+
 			}
       // create offst, future
       float d = d_abs_ind - cap_less_one_;
@@ -1329,12 +1267,7 @@ pair<double, int> Tree::NDFS(int d_abs_ind) {
       offset += future; // far
 		}
 	}
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-	return prev->data_;
-=======
->>>>>>> 61939a9 (efficiency)
+
 
 	//case 3: d_abs_ind has h=1.
 	if (dh == 1) {
@@ -1344,10 +1277,7 @@ pair<double, int> Tree::NDFS(int d_abs_ind) {
 	}
 
 	return cur_node->data_;	
-<<<<<<< HEAD
-=======
->>>>>>> 7ed90f9 (efficiency)
->>>>>>> 61939a9 (efficiency)
+
 }
 
 //Search the tree for the absolute index
