@@ -74,6 +74,7 @@ class Tree {
 		int height(int d_abs_ind);
 		int unalc_ht();
 		pair<double, int> DFS(int abs_index);
+		pair<double, int> NDFS(int abs_index);
 		TreeNode* DFST(int abs_index);
 		pair<double, int> BFS(int abs_index);
 

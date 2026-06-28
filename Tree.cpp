@@ -1283,19 +1283,26 @@ void Tree::sort() {
 	int bf = this->branching_factor_;
 	int abs_ind = 1;
 	int ef_ch = 1; //effective ch
+	int h_ai = 0; //height of abs_ind
 	if (this->root_ != NULL) {
 		//as sort() always occurs after insert(), this registers the latent change.
 		size++;
 	} else {
 		return;
 	}
-	while (ef_ch < this->height(this->alc_unq_) + 1) {
+	int cap_efch = 1 + bf;
+	int clo_efch = 1;
+	const int mh = this->height(this->alc_unq_) + 1;
+	while (ef_ch < mh) {
 		//For every subindex of this->unq, create a path.
 		vector<int> A;
 		A.assign(ef_ch + 1, 0);
 		//Reset or create A
-		int i = ( (abs_ind - this->cap_less_one(this->height(abs_ind))) / bf) + 1;
+		int i = ( (abs_ind - this->cap_less_one(h_ai)) / bf) + 1;
 		int abv = -1;
+		int cap = this->cap(ef_ch);
+		int clo = cap_less_one(ef_ch);
+		int clo_m1 = cap_less_one(ef_ch-1);
 		for (int ch = ef_ch; ch > 0; ch--) {
 			//If this is first in path, things not so straight forward.
 			if (abv == -1) {
@@ -1305,17 +1312,17 @@ void Tree::sort() {
 				} else {
 					//if we are at end of path, exit or keep goind once more.  
 					if (ch - 1 < 0) {
-						if (ef_ch == this->height(abs_ind)) {
+						if (ef_ch == h_ai) {
 							abv = i + (0 - 1);
 						} else {
-							abv = (abv - cap_less_one(this->height(abv)) / bf) + 1 + (0 - 1);
+							abv = (abv - clo / bf) + 1 + (0 - 1);
 						}
 					//If we are reach point in path which has height=ef_ch, exit. else keep going.
 					} else {
-						if (ef_ch == this->height(abs_ind)) {
-							abv = i + (cap_less_one(ch-1) - 1);
+						if (ef_ch == h_ai) {
+							abv = i + (clo_m1 - 1);
 						} else {
-							abv = (abv - cap_less_one(this->height(abv)) / bf) + 1 + (cap_less_one(ch-1) - 1);
+							abv = (abv - clo / bf) + 1 + (clo_m1 - 1);
 						}
 					}
 				}
@@ -1325,15 +1332,19 @@ void Tree::sort() {
 				if (ch == 1) {
 					continue;
 				} else if (ch == 2) {
-					abv = ( (abv - cap_less_one(ch)) / bf) + 1;
+					abv = ( (abv - clo) / bf) + 1;
 				} else {
-					abv = ( (abv - cap_less_one(ch)) / bf ) + cap_less_one(ch-1);			
+					abv = ( (abv - clo) / bf ) + clo_m1;			
 				} 
 			}
+			//
+			cap -= pow(bf, ch);
+			clo -= pow(bf, ch-1);
+			clo_m1 -= pow(bf, ch-2);
 		}	
 		
 		//For each ind in cap, regardless if its void, traverse its A.
-		while (abs_ind < cap(ef_ch)) {
+		while (abs_ind < cap_efch) {
 			TreeNode* prev = this->root_;
 			int exit = -1;
 			for (vector<int>::iterator it = A.begin() + 1; it != A.end() - 1; it++) {
@@ -1354,6 +1365,9 @@ void Tree::sort() {
 					size++;
 					unq = abs_ind;
 					alc_unq = abs_ind;	
+
+					//this->height(abs_ind) used throughout loop
+					h_ai = std::floor( std::pow(abs_ind, (ef_ch/mh)) );
 				} else if (get<1>(prev->subtrees_.at(ins)->data_) == -1) {
 					alc_unq = abs_ind;
 				}
@@ -1364,6 +1378,9 @@ void Tree::sort() {
 			r(ef_ch, bf, A);
 		}
 		ef_ch++;
+		//Used throughout this loop
+		cap_efch += std::pow(bf, ef_ch);
+		clo_efch += std::pow(bf, ef_ch-1);
 	}
 	this->set_unq(unq + 1);	
 	this->set_size(size);
@@ -1510,26 +1527,12 @@ bool g_thn_neg_one(int i) {
 	return i >= -1;
 }
 
-/*
-bool line_all_null(queue<TreeNode*> l) {
-	TreeNode* treenode;
-	while (l.empty() != true) {
-		treenode = l.front();
-		if ( get<1>(treenode->data_) >= 0 ) {
-			return false;
-		}	
-		l.pop();
-	}
-	return true;
-}
-*/
-
 int Tree::cap_less_one(int h) {
 	//added
 	if (h == 1) {
 		return 1;
 	} else if (h < 1) {
-		cout << "Error: Tree::cap_less_one(int): Invalid argument\n";
+		//cout << "Error: Tree::cap_less_one(int): Invalid argument\n";
 		return -1;
 	}
 	
