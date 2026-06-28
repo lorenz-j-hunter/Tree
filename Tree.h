@@ -34,6 +34,7 @@ class Tree {
 		int size_ = 0;
 		int unq_ = 0;
 		int alc_unq_ = 0;
+		int fv_ = 0; //first void index
 		void print_helper();
 		void set_size(int data);
 		void increment_size();

@@ -60,27 +60,29 @@ void Tree::insert(double data) {
 		this->increment_alc_unq();
 		return;
 	}
-	//DFS algorithm here.
 	const int orig_unq = this->unq_;
 	int bf = this->branching_factor_;
 	//calculate dh
-
 	int h = 0; 
 	int a = 0;
-	for (int abs_ind = 0; abs_ind < this->unq_; abs_ind++) {
+	//1. begin at the first void index or 0. End at the next void index or this->unq_.
+	for (int abs_ind = this->fv_; abs_ind < this->unq_; abs_ind++) {
 		pair<double, int> data = NDFS(abs_ind);
 		if (get<1>(data) == -1) {
 			h = this->height(a);
+			this->fv_ = abs_ind;
 			break;
 		}
 		if (abs_ind == this->unq_-1) {
 			a++;
+			this->fv_ = 0;
 			h = this->height();
 			break;
 		}
 
 		a++;
 	}
+	//2. calculate dh
 	int dh;
 	if (this->is_balanced(h)) {
 		dh = h + 1;
@@ -332,6 +334,11 @@ void Tree::remove() {
 	//delete
 	int insertion_index = ((this->unq_ - 1) - 1) % bf;
 	pair<double, int> new_pair (0, -1);
+
+	int d_abs_ind = pow(bf, desired_depth) + desired_d;
+	if (d_abs_ind < this->fv_) {
+		this->fv_ = d_abs_ind;
+	}
 
 	prev->subtrees_.at(insertion_index) = new TreeNode(new_pair);
 	vector<int> abs_indices;
@@ -631,6 +638,10 @@ void Tree::remove(int desired_depth, int desired_d) {
 	int insertion_index = (d_abs_ind - 1) % bf;
 	pair<double, int> _void (0, -1);
 
+	if (d_abs_ind < this->fv_) {
+		this->fv_ = d_abs_ind;
+	}
+
 	prev->subtrees_.at(insertion_index) = new TreeNode(_void);
 	vector<int> abs_indices;
 	for (int index = 0; index < bf; index++) {
@@ -648,12 +659,15 @@ void Tree::remove(int desired_depth, int desired_d) {
 //Seek the first null space. Insert a void to this space.
 void Tree::insert(void* blank) {
 	//Determine the location of the first null space
+	int node = this->fv_;
+	/*
 	int node = 0;
 	TreeNode* r = this->root_;
 	while (get<1>(r->data_) != -2) {
 		node++;
 		r = DFST(node);
 	}
+	*/
 	//DFS algorithm here.
 	//calculate ch, dh
 	int ch = this->height(node);
