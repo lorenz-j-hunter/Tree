@@ -1,11 +1,14 @@
 # B-Tree
 Tree with user-selected branching factor. Uses DFS as its primary search method.
----
+___
+##### Opening
+A tree consists of nodes. Each node can have subtrees, leaves, or none at all.
+___
 ##### Details
 The tree is kept so that there are no void indices past the last full node. In practice,
 if there exists a node for which all of its first-order children are void, the subtrees
 vector is deallocated.
----
+___
 ##### Nomenclature
 <dl>
   <dt>Definition list</dt>
@@ -19,6 +22,11 @@ vector is deallocated.
   <dd>A node which has been allocated but does not store meaningful data. These are represented by 
   <code>TreeNode</code>s with <code>data_</code>=(0, -1).
   A void node cannot have children.</dd>
+  <dt><strong>Absolute index</strong></dt>
+  <dd>Each node has a unique identifier. These identifiers are natural numbers 
+  which are ordered, like a set. Going from h=0 to h=x, from left to right, the identifiers monotonically
+  increase. If, while going from top to bottom, left to right, we encounter a void node, then its identifier
+  is skipped and the next full one is as if we had not. The absolute index is this identifier.</dd>
   <dt><strong>null node</strong></dt>
   <dd>This is a concept raised when a search does not find the desired node in the tree.
   It is not a node, and so it's not an allocated node.
@@ -42,7 +50,14 @@ vector is deallocated.
   <dd>Refers to the "distance" of a node in question from the beginning of its level.
   The <code>d</code> = <code>d_abs_ind</code>-<code>cap_less_one_</code>.</dd>
 </dl>
----
 
+___
+##### Search Algorithm
+Let **d_abs_ind** be the desired search index. It has a height of **dh**. Search starts from the root, 
+which has **bf** subtree nodes. The current node, **cur**, begins at the root. In order to go from the root
+to **d_abs_ind**, we need a path. Note that the location of **d_abs_ind** within its level shows us which
+step to take for **cur**; Integer division of **d** / **bf** gives us the index of the correct next **cur** node,
+which is **blw**, to traverse to. Iterate this process until **cur** is on **d_abs_ind**.
+___
 ##### Problems and current state (6-30-26)
 There is a semantic bug in `Tree::remove(int desired_depth, int desired_d)`. Details inside.
