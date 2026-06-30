@@ -1,10 +1,21 @@
-objects = Tree.o TreeNode.o
+# Compiler
+includes = -I./main -I./lowlevel
 
-%.o:	%.cpp
-	g++ -c -g $<
+# Project Structure
+target = main/tree 
+sources = $(wildcard main/*.cpp) \
+					$(wildcard lowlevel/*.cpp)
+objects = $(sources:%=objects/%) # for each relpath in sources, prepend "objects" to it
+objects := $(objects:.cpp=.o) # change/map ".cpp" to ".o".
 
-main:	main.o $(objects)
-	g++ -g main.o $(objects) -o tree 
+# Link
+$(target): $(objects)
+	g++ -g $(includes) $(objects) -o $(target) 
 
+# Compile
+objects/%.o: %.cpp 
+	g++ -g $(includes) -c $< -o $@
+
+# Cleanup
 clean:
-	rm *.o
+	rm ./objects/*.o $(target) 
