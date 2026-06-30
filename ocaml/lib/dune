@@ -1,0 +1,4 @@
+(library
+ (name treelib)
+ (public_name treelib)
+ (modules :standard))

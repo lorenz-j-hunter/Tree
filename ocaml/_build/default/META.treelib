@@ -1,0 +1,6 @@
+description = ""
+requires = ""
+archive(byte) = "treelib.cma"
+archive(native) = "treelib.cmxa"
+plugin(byte) = "treelib.cma"
+plugin(native) = "treelib.cmxs"

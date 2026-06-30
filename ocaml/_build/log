@@ -1,0 +1,18 @@
+# dune exec tree
+# OCAMLPARAM: unset
+# Shared cache: enabled-except-user-rules
+# Shared cache location: /home/lhunter/.cache/dune/db
+# Workspace root: /home/lhunter/cs229/practice/Tree/ocaml
+# Auto-detected concurrency: 8
+# Dune context:
+#  { name = "default"
+#  ; kind = "default"
+#  ; profile = Dev
+#  ; merlin = true
+#  ; fdo_target_exe = None
+#  ; build_dir = In_build_dir "default"
+#  ; instrument_with = []
+#  }
+$ /home/lhunter/.opam/5.3.0/bin/ocamlc.opt -config > /tmp/dune_882ddb_output
+$ (cd _build/default && /home/lhunter/.opam/5.3.0/bin/ocamlopt.opt -short-paths -keep-locs -warn-error +a -g -I bin/.main.eobjs/byte -I bin/.main.eobjs/native -I lib/.treelib.objs/byte -I lib/.treelib.objs/native -cmi-file bin/.main.eobjs/byte/dune__exe__Main.cmi -no-alias-deps -opaque -o bin/.main.eobjs/native/dune__exe__Main.cmx -c -impl bin/main.ml)
+$ (cd _build/default && /home/lhunter/.opam/5.3.0/bin/ocamlopt.opt -short-paths -keep-locs -warn-error +a -g -o bin/main.exe lib/treelib.cmxa bin/.main.eobjs/native/dune__exe__Main.cmx)

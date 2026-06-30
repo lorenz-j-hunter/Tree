@@ -1,0 +1,44 @@
+(lang dune 3.21)
+(name treelib)
+(sections (lib .) (libexec .) (bin ../../bin))
+(files
+ (lib
+  (META
+   dune-package
+   opam
+   tree.ml
+   treelib.a
+   treelib.cma
+   treelib.cmi
+   treelib.cmt
+   treelib.cmx
+   treelib.cmxa
+   treelib.ml
+   treelib__Tree.cmi
+   treelib__Tree.cmt
+   treelib__Tree.cmx))
+ (libexec (treelib.cmxs))
+ (bin (tree)))
+(library
+ (name treelib)
+ (kind normal)
+ (archives (byte treelib.cma) (native treelib.cmxa))
+ (plugins (byte treelib.cma) (native treelib.cmxs))
+ (native_archives treelib.a)
+ (main_module_name Treelib)
+ (modes byte native)
+ (modules
+  (wrapped
+   (group
+    (alias
+     (obj_name treelib)
+     (visibility public)
+     (kind alias)
+     (source (path Treelib) (impl (path treelib.ml-gen))))
+    (name Treelib)
+    (modules
+     (module
+      (obj_name treelib__Tree)
+      (visibility public)
+      (source (path Tree) (impl (path tree.ml))))))
+   (wrapped true))))
