@@ -30,11 +30,11 @@ class Tree {
 	private:
 		TreeNode* root_;
 		int branching_factor_ = 0;
-		//all private attributes are one-indexed.	
 		int size_ = 0;
 		int unq_ = 0;
 		int alc_unq_ = 0;
 		int fv_ = 0; //first void index
+		/*note: unq_, alc_unq, and fv_ are all 1 ahead of what they denote.*/
 		void print_helper();
 		void set_size(int data);
 		void increment_size();
