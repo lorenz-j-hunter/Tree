@@ -1,2 +1,4 @@
+open Treelib.Tree
+
 let () =
-  Treelib.Tree.run()
+  print_endline "Hello, World!" ;
