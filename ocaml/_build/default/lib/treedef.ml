@@ -1,5 +1,6 @@
 open Nodedef
-type node_type = Null of unit | Node of node_class
+type node_type = Null of unit | Node of node
+type node_pair_type = Null_p of unit | Pair of float*int 
 (*declare function parameters and return types here*)
 class type tree_type = object 
   val mutable root_: node_type 
@@ -38,11 +39,11 @@ class type tree_type = object
   method height_unit: unit -> int 
   method height_i: int -> int 
   method unalc_ht: unit -> unit 
-  method dfs: int -> unit
-  method ndfs: int -> float*int 
-  method dfst: unit -> unit
-  method bfs: int -> unit
-  method get_branching_factor: unit -> int 
+  method dfs: int -> node_pair_type 
+  method ndfs: int -> node_pair_type 
+  method dfst: unit -> node_type 
+  method bfs: int -> node_pair_type 
+  method get_bf: unit -> int 
   method get_size: unit -> int 
   method get_unq: unit -> int 
   method get_alc_unq: unit -> int 
@@ -61,7 +62,7 @@ class tree: tree_type =
     val mutable alc_unq_ = (0 : int) 
     val mutable fv_ = (0 : int)
     (*private functions*)
-    method set_size data = Tree.set_size data
+    method set_size data = () 
     method increment_size () =
       size_ <- size_ + 1
     method decrement_size () =
@@ -76,44 +77,91 @@ class tree: tree_type =
       alc_unq_ <- alc_unq_ + 1 
     method decrement_alc_unq () =
       alc_unq_ <- alc_unq_ - 1 
-    method cap_less_one h = Tree.cap_less_one h
-    method cap h = Tree.cap h 
-    method sort () = Tree.sort ()
-    method allocate () = Tree.allocate ()
-    method is_alloc_bal () = Tree.is_alloc_bal ()
-    method alc_ht () = Tree.alc_ht ()
-    method count_alc () = Tree.count_alc ()
-    method r n bf path = Tree.r n bf path 
+    method cap_less_one h =
+      if h = 1 then
+        1
+      else if h < 1 then
+        -1
+      else begin
+        let capacity = 0 in
+        let rec add = fun (c: int) (ch: int) ->
+          match (ch < h) with
+          | false -> c
+          | true ->
+            let c_ref = ref c in
+              c_ref := c + int_of_float ( float_of_int (self#get_bf()) ** float_of_int (ch) );
+            add c (ch+1)
+        in add capacity 0 
+      end 
+    method cap h =  
+      if h = 1 then
+        1
+      else if h < 1 then
+        -1
+      else begin
+        let capacity = 0 in
+        let rec add = fun (c: int) (ch: int) ->
+          match (ch <= h) with
+          | false -> c
+          | true ->
+            let c_ref = ref c in
+              c_ref := c + int_of_float ( float_of_int (self#get_bf()) ** float_of_int (ch) );
+            add c (ch+1)
+        in add capacity 0 
+      end 
+    method sort () = () 
+    method allocate () = () 
+    method is_alloc_bal () = false 
+    method alc_ht () = false 
+    method count_alc () = 0 
+    method r n bf path = () 
     (*public functions*)
-    method append data = Tree.append data
+    method append data = () 
     method print () =
       let root = self#get_root () in
       if root <> Null () then begin
         for node = 1 to self#get_unq () do
-          let cur = (0.0, -1) in (*This should be the result of ndfs.*)
-          let value = fst cur in
-          if value <> float_of_int 0 then
-            print_endline (string_of_float value)
+          let cur: node_pair_type = self#ndfs node in
+          match cur with
+          | Null_p () -> ()
+          | Pair (fst, snd) ->
+            if fst <> float_of_int 0 then
+              print_endline (string_of_float fst)
           done;
         end
-      else print_endline "Tree is null"
-    method rmlast () = Tree.rmlast ()
-    method convert () = Tree.convert ()
-    method insert data h d = Tree.insert data h d 
-    method remove h d = Tree.remove h d
-    method is_balanced_unit () = Tree.is_balanced_unit ()
-    method is_balanced_h h = Tree.is_balanced_h h
-    method alloc_by_bal () = Tree.alloc_by_bal ()
-    method alloc_lvl () = Tree.alloc_lvl ()
-    method height_unit () = Tree.height_unit ()
-    method height_i i = Tree.height_i i 
-    method unalc_ht () = Tree.unalc_ht ()
-    method dfs abs_index = Tree.dfs abs_index
-    method ndfs abs_index =
-      (0.0, -1);
-    method dfst () = Tree.dfst ()
-    method bfs abs_index = Tree.bfs abs_index
-    method get_branching_factor () = bf_ 
+      else print_endline "Tree is null, won't print."
+    method rmlast () = () 
+    method convert () = () 
+    method insert data h d = () 
+    method remove h d = () 
+    method is_balanced_unit () = false 
+    method is_balanced_h h = false 
+    method alloc_by_bal () = () 
+    method alloc_lvl () = () 
+    method height_unit () = 0 
+    method height_i i = 0 
+    method unalc_ht () = () 
+    method dfs abs_index = Null_p () 
+    method ndfs d_abs_ind =
+      if d_abs_ind > self#get_unq () || d_abs_ind < 0 then
+        Null_p ()
+      else
+        let dh = self#height_i d_abs_ind in
+        let cap_less_one_ = self#cap_less_one (dh) in
+          match ((d_abs_ind=0), (cap_less_one_= -1)) with
+          | (false, false) -> (*normal operation*) 
+              Pair (0.0, -1)
+          | (true, false) -> failwith "Should never get here"
+          | (false, true) -> failwith "should never get here" 
+          | (true, true) ->  begin
+            match self#get_root () with
+            | Null () -> Null_p ()
+            | Node n -> 
+              let (a,b) = n#get_pair in Pair (a, b) 
+            end
+    method dfst () = Null () 
+    method bfs abs_index = Null_p () 
+    method get_bf () = bf_ 
     method get_size () = size_ 
     method get_unq () = unq_ 
     method get_alc_unq () = alc_unq_ 
@@ -121,5 +169,5 @@ class tree: tree_type =
     method set_branching_factor data =
       bf_ <- data
     (*rule of three*)
-    method constructor data = Tree.constructor data
+    method constructor data = () 
   end

@@ -3,8 +3,5 @@
 (** @canonical Treelib.Nodedef *)
 module Nodedef = Treelib__Nodedef
 
-(** @canonical Treelib.Tree *)
-module Tree = Treelib__Tree
-
 (** @canonical Treelib.Treedef *)
 module Treedef = Treelib__Treedef
