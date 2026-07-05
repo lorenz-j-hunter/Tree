@@ -1,7 +1,8 @@
-open Treelib.Tree
+open Treelib.Treedef
 
 let tree_test_code () =
-  Treelib.Tree.print () ;;
+  let t = new Treelib.Treedef.tree in
+    t#print ();;
 
 
 tree_test_code ()

@@ -1,12 +1,13 @@
+open Nodedef
+type node_type = Null of unit | Node of node_class
 (*declare function parameters and return types here*)
 class type tree_type = object 
-  val mutable root_: unit
-  val mutable branching_factor_: int
+  val mutable root_: node_type 
+  val mutable bf_: int
   val mutable size_: int
   val mutable unq_: int 
   val mutable alc_unq_: int
   val mutable fv_: int 
-  method print_helper: unit -> unit
   method set_size: int -> unit
   method increment_size: unit -> unit
   method decrement_size: unit -> unit
@@ -38,13 +39,14 @@ class type tree_type = object
   method height_i: int -> int 
   method unalc_ht: unit -> unit 
   method dfs: int -> unit
-  method ndfs: int -> unit
+  method ndfs: int -> float*int 
   method dfst: unit -> unit
   method bfs: int -> unit
   method get_branching_factor: unit -> int 
   method get_size: unit -> int 
   method get_unq: unit -> int 
   method get_alc_unq: unit -> int 
+  method get_root: unit -> node_type 
   method set_branching_factor: int -> unit
   (*Rule of Three*)
   method constructor: int -> unit
@@ -52,22 +54,28 @@ end
 
 class tree: tree_type =
   object (self)
-    val mutable root_ = () 
-    val mutable branching_factor_ = (0 : int)
+    val mutable root_: node_type = Null () 
+    val mutable bf_ = (0 : int)
     val mutable size_ = (0 : int) 
     val mutable unq_ = (0 : int) 
     val mutable alc_unq_ = (0 : int) 
     val mutable fv_ = (0 : int)
     (*private functions*)
-    method print_helper () = Tree.print_helper () 
     method set_size data = Tree.set_size data
-    method increment_size () = Tree.increment_size ()
-    method decrement_size () = Tree.decrement_size ()
-    method increment_unq () = Tree.increment_unq ()
-    method set_unq data = Tree.set_unq data
-    method set_alc_unq data = Tree.set_alc_unq data
-    method increment_alc_unq () = Tree.increment_alc_unq ()
-    method decrement_alc_unq () = Tree.decrement_alc_unq ()
+    method increment_size () =
+      size_ <- size_ + 1
+    method decrement_size () =
+      size_ <- size_ - 1 
+    method increment_unq () =
+      unq_ <- unq_ + 1 
+    method set_unq data =
+      unq_ <- data 
+    method set_alc_unq data =
+      alc_unq_ <- data 
+    method increment_alc_unq () =
+      alc_unq_ <- alc_unq_ + 1 
+    method decrement_alc_unq () =
+      alc_unq_ <- alc_unq_ - 1 
     method cap_less_one h = Tree.cap_less_one h
     method cap h = Tree.cap h 
     method sort () = Tree.sort ()
@@ -78,7 +86,17 @@ class tree: tree_type =
     method r n bf path = Tree.r n bf path 
     (*public functions*)
     method append data = Tree.append data
-    method print () = Tree.print ()
+    method print () =
+      let root = self#get_root () in
+      if root <> Null () then begin
+        for node = 1 to self#get_unq () do
+          let cur = (0.0, -1) in (*This should be the result of ndfs.*)
+          let value = fst cur in
+          if value <> float_of_int 0 then
+            print_endline (string_of_float value)
+          done;
+        end
+      else print_endline "Tree is null"
     method rmlast () = Tree.rmlast ()
     method convert () = Tree.convert ()
     method insert data h d = Tree.insert data h d 
@@ -91,14 +109,17 @@ class tree: tree_type =
     method height_i i = Tree.height_i i 
     method unalc_ht () = Tree.unalc_ht ()
     method dfs abs_index = Tree.dfs abs_index
-    method ndfs abs_index = Tree.ndfs abs_index
+    method ndfs abs_index =
+      (0.0, -1);
     method dfst () = Tree.dfst ()
     method bfs abs_index = Tree.bfs abs_index
-    method get_branching_factor () = Tree.get_branching_factor ()
-    method get_size () = Tree.get_size ()
-    method get_unq () = Tree.get_unq ()
-    method get_alc_unq () = Tree.get_alc_unq ()
-    method set_branching_factor data = Tree.set_branching_factor data
+    method get_branching_factor () = bf_ 
+    method get_size () = size_ 
+    method get_unq () = unq_ 
+    method get_alc_unq () = alc_unq_ 
+    method get_root () = root_
+    method set_branching_factor data =
+      bf_ <- data
     (*rule of three*)
     method constructor data = Tree.constructor data
   end

@@ -1,8 +1,8 @@
-open Treelib.Tree
+open Treelib.Treedef
 
 let tree_test_code () =
-  print_endline "Hello, World!" ;;
-  Treelib.Tree.print () ;;
+  let t = new Treelib.Treedef.tree in
+    t#print ();;
 
 
 tree_test_code ()
