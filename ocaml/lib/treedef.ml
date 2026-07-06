@@ -1,4 +1,5 @@
 open Nodedef
+(*options*)
 type node_type = Null of unit | Node of node
 type node_pair_type = Null_p of unit | Pair of float*int 
 (*declare function parameters and return types here*)
@@ -149,16 +150,77 @@ class tree: tree_type =
         let dh = self#height_i d_abs_ind in
         let cap_less_one_ = self#cap_less_one (dh) in
           match ((d_abs_ind=0), (cap_less_one_= -1)) with
-          | (false, false) -> (*normal operation*) 
-              Pair (0.0, -1)
-          | (true, false) -> failwith "Should never get here"
-          | (false, true) -> failwith "should never get here" 
-          | (true, true) ->  begin
+          | (false, false) -> begin (*normal operation*) 
+              let ret = Pair (0.0, -1) in
+              let cur_node = self#get_root () in
+              let do_and_return = fun x -> x; () in 
+              (*For each loop iteration ...*)
+              let rec func = fun (ch, future, offset, clo_, blw, cap_, cur, cur_node) -> begin
+                let allvals = [
+                  ("denom", 0.0);
+                  ("cur", 0.0);
+                  ("r_cur", 0.0);
+                  ("near_begin", 0.0); 
+                  ("near_end", 0.0)
+                (*Mix strict and lazy evaluation.*)
+                ] in let rec define = fun l -> begin
+                  (*Modify the ref while cdring the pointer until it is none.*)
+                  match l with
+                  | [] -> ()
+                  | hd :: tl ->
+                    let f = fun x -> begin List.map (fun elem ->
+                      (*Since the map function works from left to right, 
+                      the updated values are used in every elem mapping.*)
+                      match elem with
+                      | ("denom", denom) -> 
+                        let ref_denom = ref denom in
+                          ref_denom := 1.0 /. float_of_int (self#get_bf ()); ()  
+                      | ("cur", cur) ->
+                        let denom = snd (List.nth x 0) in
+                        let ref_cur = ref cur in
+                          ref_cur := 
+                          Stdlib.floor (
+                              (
+                              ( ( float_of_int (d_abs_ind) -. float_of_int (cap_less_one_) )
+                              /. (float_of_int (self#get_bf ()) ** float_of_int (dh)) ) 
+                              /. denom
+                              ) +. 1.0
+                          )
+                      | ("r_cur", r_cur) -> 
+                        let cur = snd (List.nth x 1) in
+                        let ref_r_cur = ref r_cur in
+                          ref_r_cur := (
+                            cur -. clo_ +. 1.0
+                          ) /. (
+                            float_of_int (self#get_bf ())
+                            ** float_of_int (ch)
+                          )
+                      | ("near_begin", near_begin) -> 
+                        let r_cur = snd (List.nth x 2) in
+                        let ref_near_begin = ref near_begin in
+                          ref_near_begin := Stdlib.floor (
+                            r_cur
+                            /. ( 1.0 /. (float_of_int (self#get_bf ()) ** float_of_int (ch)))
+                          ) *. float_of_int (self#get_bf ())
+                      | ("near_end", near_end) -> 
+                        let near_begin = snd (List.nth x 3) in
+                        let ref_near_end = ref near_end in
+                          ref_near_end := near_begin +. float_of_int (self#get_bf ()); ()
+                      | (_, _) -> failwith "should never get here"
+                    ) x; end in do_and_return (f l);
+                    define tl;
+                end in define allvals;
+                0 (*traverse.*)
+              end in do_and_return (func (1, -1, 0, 0., -1, 0, 0, cur_node) );
+              ret;
+            end
+          | (true, true) -> begin
             match self#get_root () with
             | Null () -> Null_p ()
             | Node n -> 
               let (a,b) = n#get_pair in Pair (a, b) 
             end
+          | (_, _) -> failwith "Should never get here."
     method dfst () = Null () 
     method bfs abs_index = Null_p () 
     method get_bf () = bf_ 
