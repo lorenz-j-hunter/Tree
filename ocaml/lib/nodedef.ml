@@ -4,7 +4,8 @@ class type node_class =
     val mutable subtrees: node_class list
 
     method get_pair: float * int
-    method get_st: node_class list 
+    method get_subtrees: unit -> node_class list
+    method get_stsize: unit -> int
   end 
 
 class node (init: float*int) : node_class = 
@@ -13,7 +14,9 @@ class node (init: float*int) : node_class =
     val mutable subtrees: node_class list = []
 
     method get_pair = pair
-    method get_st = subtrees
+    method get_subtrees () = subtrees
+    method get_stsize () =
+      List.length subtrees
 end;;
 
 let new_node = new node (0.0, -1);
