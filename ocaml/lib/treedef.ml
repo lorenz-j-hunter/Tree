@@ -158,78 +158,172 @@ class tree: tree_type =
                 let do_and_return = fun x -> x; () in 
                 (*For each loop iteration ...*)
                 let rec func = fun ch future offset clo_ blw cap_ cur -> begin
-                  let allvals = [
-                    ("denom", 0.0);
-                    ("cur", 0.0);
-                    ("r_cur", 0.0);
-                    ("near_begin", 0.0); 
-                    ("near_end", 0.0)
-                  (*Mix strict and lazy evaluation.*)
-                  ] in let rec define = fun l -> begin
-                    (*Modify the ref while cdring the pointer until it is none.*)
-                    match l with
-                    | [] -> ()
-                    | hd :: tl ->
-                      let f = fun x -> begin List.map (fun elem ->
-                        (*Since the map function works from left to right, 
-                        the updated values are used in every elem mapping.*)
-                        match elem with
-                        | ("denom", denom) -> 
-                          let ref_denom = ref denom in
-                            ref_denom := 1.0 /. float_of_int (self#get_bf ()); ()  
-                        | ("cur", cur) ->
-                          let denom = snd (List.nth x 0) in
-                          let ref_cur = ref cur in
-                            ref_cur := 
-                            Stdlib.floor (
-                                (
-                                ( ( float_of_int (d_abs_ind) -. float_of_int (cap_less_one_) )
-                                /. (float_of_int (self#get_bf ()) ** float_of_int (dh)) ) 
-                                /. denom
-                                ) +. 1.0
-                            )
-                        | ("r_cur", r_cur) -> 
-                          let cur = snd (List.nth x 1) in
-                          let ref_r_cur = ref r_cur in
-                            ref_r_cur := (
-                              cur -. float_of_int (clo_) +. 1.0
-                            ) /. (
-                              float_of_int (self#get_bf ())
-                              ** float_of_int (ch)
-                            )
-                        | ("near_begin", near_begin) -> 
-                          let r_cur = snd (List.nth x 2) in
-                          let ref_near_begin = ref near_begin in
-                            ref_near_begin := Stdlib.floor (
-                              r_cur
-                              /. ( 1.0 /. (float_of_int (self#get_bf ()) ** float_of_int (ch)))
-                            ) *. float_of_int (self#get_bf ())
-                        | ("near_end", near_end) -> 
-                          let near_begin = snd (List.nth x 3) in
-                          let ref_near_end = ref near_end in
-                            ref_near_end := near_begin +. float_of_int (self#get_bf ()); ()
-                        | (_, _) -> failwith "should never get here"
-                      ) x; end in do_and_return (f l);
-                      define tl;
-                  end in define allvals;
-                  (*Node traversal.*)
-                  let cur = snd (List.nth allvals 1) in
-                  let trav_index = (int_of_float (cur) - 1) mod (self#get_bf ()) in
-                  if (!cur_node_ref)#get_stsize () <= trav_index then
-                    ()
-                  else
-                    cur_node_ref := List.nth ((!cur_node_ref)#get_subtrees ()) trav_index;
-                  if snd (n#get_pair) = d_abs_ind then (*Break.*)
-                    let (fst, snd) = n#get_pair in
-                      ref ret := Pair (fst, snd)
-                  else (*Create offset, future.*)
-                    ref blw := 0;
-                    let d: float = float_of_int (d_abs_ind) -. float_of_int (cap_less_one_) in
-                    let frame: float = float_of_int (self#get_bf()) ** float_of_int (dh-1) in
-                      ref offset := int_of_float (Stdlib.floor (d /. frame));
-                    ref future := offset;
-                    ref clo_ := 0;
-                    ref cap_ := 1;
+                  if blw = -1 then begin
+                    let allvals = [
+                      ("denom", 0.0);
+                      ("cur", 0.0);
+                      ("r_cur", 0.0);
+                      ("near_begin", 0.0); 
+                      ("near_end", 0.0)
+                    (*Mix strict and lazy evaluation.*)
+                    ] in let rec define = fun l -> begin
+                      (*Modify the ref while cdring the pointer until it is none.*)
+                      match l with
+                      | [] -> ()
+                      | hd :: tl ->
+                        let f = fun x -> begin List.map (fun elem ->
+                          (*Since the map function works from left to right, 
+                          the updated values are used in every elem mapping.*)
+                          match elem with
+                          | ("denom", denom) -> 
+                            let ref_denom = ref denom in
+                              ref_denom := 1.0 /. float_of_int (self#get_bf ()); ()  
+                          | ("cur", cur) ->
+                            let denom = snd (List.nth x 0) in
+                            let ref_cur = ref cur in
+                              ref_cur := 
+                              Stdlib.floor (
+                                  (
+                                  ( ( float_of_int (d_abs_ind) -. float_of_int (cap_less_one_) )
+                                  /. (float_of_int (self#get_bf ()) ** float_of_int (dh)) ) 
+                                  /. denom
+                                  ) +. 1.0
+                              )
+                          | ("r_cur", r_cur) -> 
+                            let cur = snd (List.nth x 1) in
+                            let ref_r_cur = ref r_cur in
+                              ref_r_cur := (
+                                cur -. float_of_int (clo_) +. 1.0
+                              ) /. (
+                                float_of_int (self#get_bf ())
+                                ** float_of_int (ch)
+                              )
+                          | ("near_begin", near_begin) -> 
+                            let r_cur = snd (List.nth x 2) in
+                            let ref_near_begin = ref near_begin in
+                              ref_near_begin := Stdlib.floor (
+                                r_cur
+                                /. ( 1.0 /. (float_of_int (self#get_bf ()) ** float_of_int (ch)))
+                              ) *. float_of_int (self#get_bf ())
+                          | ("near_end", near_end) -> 
+                            let near_begin = snd (List.nth x 3) in
+                            let ref_near_end = ref near_end in
+                              ref_near_end := near_begin +. float_of_int (self#get_bf ()); ()
+                          | (_, _) -> failwith "should never get here"
+                        ) x; end in do_and_return (f l);
+                        define tl;
+                    end in define allvals;
+                    (*Node traversal.*)
+                    let cur = snd (List.nth allvals 1) in
+                    let trav_index = (int_of_float (cur) - 1) mod (self#get_bf ()) in
+                    if (!cur_node_ref)#get_stsize () <= trav_index then
+                      ()
+                    else
+                      cur_node_ref := List.nth ((!cur_node_ref)#get_subtrees ()) trav_index;
+                    if snd (n#get_pair) = d_abs_ind then (*Break.*)
+                      let (fst, snd) = n#get_pair in
+                        ref ret := Pair (fst, snd)
+                    else (*Create offset, future.*)
+                      ref blw := 0;
+                      let d: float = float_of_int (d_abs_ind) -. float_of_int (cap_less_one_) in
+                      let frame: float = float_of_int (self#get_bf()) ** float_of_int (dh-1) in
+                        ref offset := int_of_float (Stdlib.floor (d /. frame));
+                      ref future := offset;
+                      ref clo_ := 0;
+                      ref cap_ := 1;
+                  (*Else*)
+                  end else begin
+                    ref cap_ := cap_ + int_of_float(
+                      float_of_int (self#get_bf ()) ** float_of_int (ch - 1)
+                    ); (*same level as cur, currently.*)
+                    ref clo_ := clo_ +  int_of_float(
+                      float_of_int (self#get_bf ()) ** float_of_int (ch - 2)
+                    ); (*same level as cur, currently.*)
+
+                    let allvals = [
+                      ("denom", 0.0);
+                      ("r_cur", 0.0);
+                      ("near_begin", 0.0); 
+                      ("near_end", 0.0);
+                      ("frame", 0.);
+                      ("end", 0.);
+                      ("num", 0.);
+                      ("r", 0.);
+                      ("addition", 0.);
+                    (*Mix strict and lazy evaluation.*)
+                    ] in let rec define = fun l -> begin
+                      (*Modify the ref while cdring the pointer until it is none.*)
+                      match l with
+                      | [] -> ()
+                      | hd :: tl ->
+                        let f = fun x -> begin List.map (fun elem ->
+                          (*Since the map function works from left to right, 
+                          the updated values are used in every elem mapping.*)
+                          match elem with
+                          | ("denom", denom) -> 
+                            let ref_denom = ref denom in
+                              ref_denom := 1.0 /. float_of_int (self#get_bf ()); ()  
+                          | ("r_cur", r_cur) ->
+                            let denom = snd (List.nth x 0) in
+                            let ref_r_cur = ref r_cur in
+                              ref_r_cur := 
+                              (cur -. float_of_int clo_) /. denom
+                          | ("near_begin", near_begin) -> 
+                            let denom = snd (List.nth x 0) in
+                            let r_cur = snd (List.nth x 1) in
+                            let ref_near_begin = ref near_begin in
+                              ref_near_begin := Stdlib.floor (
+                                r_cur *. denom
+                              ) *. float_of_int (self#get_bf ())
+                          | ("near_end", near_end) -> 
+                            let near_begin = snd (List.nth x 3) in
+                            let ref_near_end = ref near_end in
+                              ref_near_end := near_begin +. float_of_int (self#get_bf ()); ()
+                          | ("frame", frame) -> 
+                            ref frame := 
+                              float_of_int (self#get_bf ()) ** 
+                              float_of_int (dh - ch + 1) 
+                          | ("end", end_) ->
+                              let frame = snd (List.nth x 4) in
+                              ref end_ := float_of_int offset +. frame
+                          | ("num", num) ->
+                            ref num := float_of_int d_abs_ind -. float_of_int cap_less_one_ -. float_of_int offset 
+                          | ("r", r) ->
+                            let end_ = snd (List.nth x 5) in
+                            let num = snd (List.nth x 6) in
+                              ref r := num /. (end_ /. float_of_int offset)
+                          | ("addition", addition) ->
+                            let r = snd (List.nth x 7) in
+                            ref addition := Stdlib.floor (r *. float_of_int (self#get_bf ()))
+                          | (_, _) -> failwith "should never get here"
+                        ) x; end in do_and_return (f l);
+                        define tl;
+                    end in define allvals;
+                    (*Node traversal.*)
+                    if ch = dh then
+                      let addition = snd (List.nth allvals 8) in
+                      ref blw := cap_ + offset + int_of_float addition;
+                    else
+                      let addition = snd (List.nth allvals 8) in
+                      let near_begin = snd (List.nth allvals 7) in
+                      ref blw := cap_ + int_of_float near_begin + int_of_float addition;
+                    let trav_index = (blw - 1) mod (self#get_bf ()) in
+                    if (!cur_node_ref)#get_stsize () <= trav_index then
+                      ()
+                    else
+                      cur_node_ref := List.nth ((!cur_node_ref)#get_subtrees ()) trav_index;
+                    if snd (n#get_pair) = d_abs_ind then (*Break.*)
+                      let (fst, snd) = n#get_pair in
+                        ref ret := Pair (fst, snd)
+                    else (*Create offset, future.*)
+                      ref cur := float_of_int blw;
+                      ref future := 
+                        int_of_float (snd (List.nth allvals 8))
+                        * int_of_float (
+                          float_of_int (self#get_bf ()) ** float_of_int (dh-ch)
+                        );
+                      ref offset := offset + future
+                  end;
                   func (ch+1) future offset clo_ blw cap_ cur;
                 end in do_and_return (func 1, -1, 0, 0, -1, 0, 0 );
                 ret; (*return the pair*)
