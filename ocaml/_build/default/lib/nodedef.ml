@@ -1,22 +1,21 @@
-class type node_class =
+class type node =
   object 
     val mutable pair: float * int
-    val mutable subtrees: node_class list
+    val mutable subtrees: node list
 
-    method get_pair: float * int
-    method get_subtrees: unit -> node_class list
-    method get_stsize: unit -> int
+    method pair: float * int
+    method subtrees: node list
+    method stsize: int
   end 
 
-class node (init: float*int) : node_class = 
+class _node_ (init: float*int) : node = 
   object (self)
     val mutable pair = init 
-    val mutable subtrees: node_class list = []
+    val mutable subtrees: node list = []
 
-    method get_pair = pair
-    method get_subtrees () = subtrees
-    method get_stsize () =
-      List.length subtrees
+    method pair = pair
+    method subtrees = subtrees
+    method stsize = List.length subtrees
 end;;
 
-let new_node = new node (0.0, -1);
+let void_node = new _node_ (0.0, -1);
