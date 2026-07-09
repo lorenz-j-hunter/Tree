@@ -1,1 +1,1 @@
-lib/treedef.ml: Funcs List Nodedef Stdlib
+lib/treedef.ml: Funcs List Nodedef Queue Stdlib

@@ -11,6 +11,7 @@ class type tree_type = object
   val mutable unq_: int 
   val mutable alc_unq_: int
   val mutable fv_: int 
+  (*private functions*)
   method set_size: int -> unit
   method increment_size: unit -> unit
   method decrement_size: unit -> unit
@@ -51,8 +52,6 @@ class type tree_type = object
   method get_root: unit -> node_option 
   method get_fv: unit -> int
   method set_branching_factor: int -> unit
-  (*Rule of Three*)
-  method constructor: int -> unit
 end
 
 class tree: tree_type =
@@ -804,7 +803,35 @@ class tree: tree_type =
             | Node n -> Node n 
             end
           | (_, _) -> failwith "Should never get here.";
-    method bfs abs_index = Null_pair
+    method bfs abs_index =
+      let ret = ref (0., -1) in
+      let line = Queue.create () in
+      let copy = Queue.create () in
+      let root = match root_ with | Node n -> n | Null_node -> failwith "Error BFS: Null Root" in
+      let do_while = fun base_case ->
+        (*base case*)
+        if base_case = true then
+          for i = 1 to bf_ do
+            let elem = List.nth root#subtrees i in
+              Queue.push elem line;
+              if snd elem#pair = abs_index then ret := elem#pair;
+          done;
+        (*new line*)
+        while not (Queue.is_empty line) do
+          let popped = Queue.pop line in
+          for i = 1 to bf_ do
+            let elem = List.nth popped#subtrees i in
+              Queue.push elem copy;
+              if snd elem#pair = abs_index then ret := elem#pair;
+          done;
+        done;
+        let line_swap = copy in
+        let copy_swap = line in
+          ref line := line_swap;
+          ref copy := copy_swap;
+        ref base_case := false
+      in do_while true; 
+      let (fst, snd) = !ret in Pair (fst, snd)
     method get_bf () = bf_ 
     method get_size () = size_ 
     method get_unq () = unq_ 
@@ -813,6 +840,4 @@ class tree: tree_type =
     method get_fv () = fv_
     method set_branching_factor data =
       bf_ <- data
-    (*rule of three*)
-    method constructor data = () 
   end
