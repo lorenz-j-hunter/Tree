@@ -18,4 +18,5 @@ class _node_ (init: float*int) : node =
     method stsize = List.length subtrees
 end;;
 
-let void_node = new _node_ (0.0, -1);
+let void_node = new _node_ (0.0, -1)
+let unalc = new _node_ (0.0, -2)
