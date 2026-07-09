@@ -519,11 +519,118 @@ class tree: tree_type =
             self#increment_alc_unq ();
             self#increment_fv (); 
 
-    method remove h d = () 
-    method is_balanced_unit () = false 
-    method is_balanced_h h = false 
-    method alloc_by_bal () = () 
-    method alloc_lvl () = () 
+    method remove h d =  
+      let root = self#get_root () in
+      let d_abs_ind = (self#cap_less_one h) + d in
+      let dh = self#height_i d_abs_ind in
+        match root with
+        | Node n -> (*normal operation*)
+          let cap_less_one_ = self#height_i dh in
+          let future = -1 in
+          let offset = 0 in
+          let clo_ = 0 in
+          let blw = -1 in
+          let cap_ = 0 in
+          let cur = 0 in
+          let cur_node = ref n in
+          let bf = self#get_bf () in
+            for ch = 1 to dh - 1 do
+              if blw = -1 then begin
+                ref clo_ := 1;
+                ref cap_ := 1 + bf;
+                if ch = dh then (); (*exit point*)
+                let denom = 1.0 /. float_of_int bf in
+                  ref cur := int_of_float ( Stdlib.floor ( 
+                    float_of_int ( (d_abs_ind - cap_less_one_) / int_of_float (float_of_int bf ** float_of_int dh) )
+                    /. denom
+                  ) +. 1. );
+                let trav_index = (cur - 1) mod bf in
+                if (!cur_node)#stsize <= trav_index then (); (*exit point.*)
+                cur_node := List.nth ((!cur_node)#subtrees) trav_index;
+                ref blw := 0;
+                let d = d_abs_ind - cap_less_one_ in
+                let frame = int_of_float (float_of_int bf ** float_of_int (dh-1)) in
+                  ref offset := int_of_float (Stdlib.floor (float_of_int d /. float_of_int frame));
+                ref future := offset;
+                ref clo_ := 0;
+                ref cap_ := 1;
+              end else
+                ref clo_ := clo_ + int_of_float ( float_of_int (bf) ** float_of_int (ch-2) );
+                ref cap_ := cap_ + int_of_float ( float_of_int (bf) ** float_of_int (ch-1) );
+                let denom = 1.0 /. float_of_int bf in
+                let r_cur = (float_of_int cur -. float_of_int clo_) /. float_of_int bf in
+                let near_begin = int_of_float ( Stdlib.floor ( r_cur *. denom ) *. float_of_int bf ) in
+                let frame = int_of_float ( float_of_int bf ** float_of_int (dh-ch+1) ) in
+                let end_ = offset + frame in
+                let num = d_abs_ind - cap_less_one_ - offset in
+                let r = float_of_int num /. (float_of_int end_ -. float_of_int offset ) in
+                let addition = int_of_float ( Stdlib.floor (r *. float_of_int bf) ) in
+                if ch = dh then
+                  ref blw := cap_ + offset + addition
+                else
+                  ref blw := cap_ + near_begin + addition; 
+                (*travese to blw*)
+                let trav_index = (blw - 1) mod bf in
+                if (!cur_node)#stsize <= trav_index then (); (*exit point.*)
+                cur_node := List.nth ((!cur_node)#subtrees) trav_index;
+            done;
+            (*sort*)
+            if d_abs_ind < fv_ then
+              fv_ <- d_abs_ind;
+            if d_abs_ind < unq_ - 1 then
+              let temp = ref unalc#pair in
+              let abs_ind = ref (d_abs_ind - 1) in
+              while snd !temp <> -2 || snd !temp <> -1 do
+                temp := (match self#ndfs !abs_ind with | Pair (a, b) -> (a, b) | Null_pair -> (0., -2));
+                if abs_ind = ref 0 then ();
+                decr abs_ind;
+              done;
+              unq_ <- (snd !temp) + 1;
+              alc_unq_ <- (unq_ - 1) - ( (unq_ - 1) mod bf) + 1;
+            decr (ref size_);
+            (*remove*)
+            let insertion_index = (d_abs_ind - 1) mod bf in
+            let index = ref (List.nth !cur_node#subtrees insertion_index) in
+            index := void_node;
+            (*if allof indices below are -1, make blw an empty list.*)
+            let abs_indices = List.map (fun i -> snd (i#pair)) !cur_node#subtrees in
+            if all_of abs_indices eq_neg_one then ref !cur_node#subtrees := [];
+        | Null_node -> failwith "Error in remove h d: null root."
+    method is_balanced_unit () =
+      let height = ref (self#height_unit ()) in
+      let capacity = ref 0 in
+      while height >= ref 0 do
+        capacity := !capacity + pow bf_ !height;
+        decr height;
+      done;
+      size_ = !capacity
+    method is_balanced_h h = 
+      let ret = ref true in
+      let cap = self#cap h in
+      for node = 0 to cap-1 do
+        let p = (match self#ndfs node with | Pair (snd, fst) -> (snd, fst) | Null_pair -> (0., -2)) in
+        if snd p = -1 || snd p = -2 then ret := false; ()
+      done;
+      !ret
+    method alloc_by_bal () =
+      let dh = self#height_i unq_ in
+      let cap = self#cap dh in
+      let fill = cap - alc_unq_ in
+      for node = 0 to fill - 1 do
+        self#allocate ();
+      done;
+      alc_unq_ <- self#count_alc ()
+    method alloc_lvl () =
+      match root_ with
+      | Node n ->
+        if not (self#is_alloc_bal ()) then failwith "error: alloc_lvl(). cannot allocate level to unbalanced tree"
+        else
+          let h = self#alc_ht () in
+          for index = 0 to (pow bf_ (h+1)) - 1 do
+            self#allocate ()
+          done;
+          alc_unq_ <- self#count_alc ()
+      | Null_node -> self#allocate (); 
     method height_unit () =
       if (unq_ - 1) = 0 then 0
       else
