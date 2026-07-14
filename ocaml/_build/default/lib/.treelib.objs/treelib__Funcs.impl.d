@@ -1,1 +1,1 @@
-lib/funcs.ml:
+lib/funcs.ml: List

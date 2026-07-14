@@ -9,7 +9,7 @@ let () =
           t0#append (float_of_int i);
         done;
         let end_ = int_of_float (Sys.time ()) in
-          printf "This should read '5 6 7 8 9 10 11 12':";
+          printf "This should read '5 6 7 8 9 10 11 12':\t";
           t0#print ();
           printf "(duration=%d)" (end_-start);
       end;

@@ -23,7 +23,7 @@ class _node_ (init: float*int) : node =
 
     method pair = pair
     method subtrees = subtrees
-    method stsize = List.length subtrees
+    method stsize = size 
     method stcap = capacity
     method setcap cap = capacity <- cap
     method incr_sz = size <- size + 1;

@@ -17,3 +17,8 @@ let rec all_of = fun (l: int list) condition -> (*tail recursive*)
     else
       all_of tl condition
 let pow = fun base exp -> int_of_float (float_of_int base ** float_of_int exp)
+let rec replace = fun (l: 'a list) index value ->
+  if index >= List.length l || index < 0 then failwith "Funcs.replace: index out of range";
+  match index with
+  | 0 -> value :: List.tl l
+  | _ -> (List.hd l) :: replace (List.tl l) (index - 1) value

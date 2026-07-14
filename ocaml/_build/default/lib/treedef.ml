@@ -83,31 +83,25 @@ class tree: tree_type =
       if h = 1 then
         1
       else if h < 1 then
-        -1
+        failwith "cap_less_one: h < 1"
       else begin
-        let capacity = ref 0 in
-        let rec add = fun (c: int ref) (ch: int) ->
-          match (ch < h) with
-          | false -> !c
-          | true ->
-            c := !c + int_of_float ( float_of_int (bf_) ** float_of_int (ch) );
-            add c (ch+1)
-        in add capacity 0 
+         let capacity = ref 0 in begin
+          for height = 0 to h - 1 do
+            capacity := !capacity + pow bf_ height;
+          done;
+          !capacity; end
       end 
     method cap h =  
-      if h = 1 then
-        1 + bf_
-      else if h < 1 then
-        -1
+      if h = 0 then
+        1
+      else if h < 0 then
+        failwith "cap: h < 0"
       else begin
-        let capacity = ref 0 in
-        let rec add = fun (c: int ref) (ch: int) ->
-          match (ch <= h) with
-          | false -> !c
-          | true ->
-            c := !c + int_of_float ( float_of_int (bf_) ** float_of_int (ch) );
-            add c (ch+1)
-        in add capacity 0 
+        let capacity = ref 0 in begin
+          for height = 0 to h do
+            capacity := !capacity + pow bf_ height;
+          done;
+          !capacity; end
       end 
     method allocate () =
       let dh = 0 in
@@ -266,94 +260,109 @@ class tree: tree_type =
                     h := self#height_unit ();
                     raise Exit; end;
                   d_abs_ind := abs_ind + 1;
-                | Null_pair -> () (*continue*)
+                | Null_pair ->
+                  d_abs_ind := abs_ind + 1
               done 
           end;
           (*2. calculate dh*)
           let dh = ref 0 in
-            Printf.printf "dh=%d\t|\th=%d\n" !dh !h;
             let is_balanced = self#is_balanced_h !h in
             if is_balanced then begin
               dh := !h + 1;
               incr (h);
             end else
               dh := !h; 
-            let cap_less_one_ = self#cap_less_one !dh in
-            let future = ref (-1) in
-            let offset = ref 0 in
-            let clo_ = ref 0 in
-            let blw = ref (-1) in
-            let cap_ = ref 0 in
-            let cur = ref 0 in
-            let cur_node = ref n in
-              for ch = 1 to !dh - 1 do
-                if !blw = -1 then begin
-                  clo_ := 1;
-                  cap_ := 1 + bf_;
-                  if ch = !dh then raise Exit; (*exit point*)
-                  let denom = 1.0 /. float_of_int bf_ in
-                    cur := int_of_float ( Stdlib.floor ( 
-                      float_of_int (!d_abs_ind - cap_less_one_) /. float_of_int (pow bf_ !dh)
-                      /. denom
-                    ) +. 1. );
-                  let trav_index = (!cur - 1) mod bf_ in
-                  cur_node := List.nth ((!cur_node)#subtrees) trav_index;
-                  Printf.printf "(line 303) (!cur_node)#stsize=%d\n" (!cur_node)#stsize; flush stdout;
-                  if ch = !dh then raise Exit;
-                  blw := 0;
-                  let d = !d_abs_ind - cap_less_one_ in
-                  let frame = pow bf_ (!dh-1) in
-                    offset := int_of_float (Stdlib.floor (float_of_int d /. float_of_int frame));
-                  future := !offset;
-                  clo_ := 0;
-                  cap_ := 1;
-                end else begin
-                  clo_ := !clo_ + pow bf_ (ch-2);
-                  cap_ := !cap_ + pow bf_ (ch-1);
-                  let r_cur = (float_of_int !cur -. float_of_int !clo_) /. float_of_int (pow bf_ ch) in
-                  let near_begin = int_of_float (
-                    Stdlib.floor ( r_cur *. float_of_int (pow bf_ ch) ) *. float_of_int bf_
-                  ) in
-                  let frame = pow bf_ (!dh-ch+1) in
-                  let end_ = !offset + frame in
-                  let num = !d_abs_ind - cap_less_one_ - !offset in
-                  let r = float_of_int num /. (float_of_int end_ -. float_of_int !offset) in
-                  let addition = int_of_float ( Stdlib.floor (r *. float_of_int bf_) ) in
-                  if ch = !dh then
-                    blw := !cap_ + !offset + addition
+          (*3. Traverse path*)
+          let cur_node = ref n in
+          let cap_less_one_ = self#cap_less_one !dh in
+          let rec loop_and_break = fun future offset clo_ blw cap_ cur ch -> 
+            (*1st case*)
+            if !blw = -1 then begin
+              clo_ := 1;
+              cap_ := 1 + bf_;
+              if ch = !dh then begin (*Stop potential.*)
+                (*insert*)
+                let insertion_index = begin
+                if !d_abs_ind = unq_ - 1 then
+                  !d_abs_ind mod bf_
+                else
+                  (!d_abs_ind - 1) mod bf_ end;
+                in let insertion = new _node_ (data, unq_) in
+                if (!cur_node)#stcap = 0 then begin
+                  for index = 1 to bf_ do
+                    (!cur_node)#setst (void_node :: (!cur_node)#subtrees);
+                  done; (!cur_node)#setcap bf_; end;
+                (!cur_node)#setst (Funcs.replace (!cur_node)#subtrees insertion_index insertion);
+                (!cur_node)#incr_sz;
+                (*calculate new alc_unq_ and unq_*)
+                if !d_abs_ind >= unq_ then begin
+                  if fv_ = unq_ then fv_ <- fv_ + 1;
+                  unq_ <- !d_abs_ind + 1;
+                  self#increment_size ();
+                  end;
+                if !d_abs_ind >= alc_unq_ then
+                  alc_unq_ <- !d_abs_ind + bf_ - (!d_abs_ind mod bf_) + 1;
+              end else begin (*recursive case*)
+                (*Calculate blw*)
+                let denom = 1.0 /. float_of_int bf_ in
+                  cur := int_of_float ( Stdlib.floor ( 
+                    float_of_int (!d_abs_ind - cap_less_one_) /. float_of_int (pow bf_ !dh)
+                    /. denom
+                  ) +. 1. );
+                let trav_index = (!cur - 1) mod bf_ in begin
+                  if (!cur_node)#stsize <= trav_index then raise Exit; (*Fail case: Attempt to traverse to void node*)
+                  cur_node := List.nth ((!cur_node)#subtrees) trav_index; end;
+                blw := 0;
+                let d = !d_abs_ind - cap_less_one_ in
+                let frame = pow bf_ (!dh-1) in
+                  offset := int_of_float (Stdlib.floor (float_of_int d /. float_of_int frame));
+                future := !offset;
+                clo_ := 0;
+                cap_ := 1;
+                loop_and_break future offset clo_ blw cap_ cur ch end;
+            (*Nth case*)
+            end else begin
+              clo_ := !clo_ + pow bf_ (ch-2);
+              cap_ := !cap_ + pow bf_ (ch-1);
+              let denom = 1.0 /. float_of_int bf_ in
+              let r_cur = (float_of_int !cur -. float_of_int !clo_) /. float_of_int bf_ in
+              let near_begin = int_of_float ( Stdlib.floor ( r_cur *. denom ) *. float_of_int bf_ ) in
+              let frame: int = pow bf_ (!dh-ch+1) in
+              let end_: int = !offset + frame in
+              let num = !d_abs_ind - cap_less_one_ - !offset in
+              let r = float_of_int num /. (float_of_int end_ -. float_of_int !offset ) in
+              let addition = int_of_float ( Stdlib.floor (r *. float_of_int bf_) ) in
+                blw := !cap_ + near_begin + addition; 
+              (*travese to blw*)
+              let trav_index = (!blw - 1) mod bf_ in (*Stop potential.*)
+                if ch = !dh - 1 then begin (*stop case*)
+                  (*insert*)
+                  let insertion_index = begin
+                  if !d_abs_ind = unq_ - 1 then
+                    !d_abs_ind mod bf_
                   else
-                    blw := !cap_ + near_begin + addition;
-                  (*travese to blw*)
-                  let trav_index = (!blw - 1) mod bf_ in
+                    (!d_abs_ind - 1) mod bf_ end;
+                  in let insertion = new _node_ (data, unq_) in
+                  if (!cur_node)#stcap = 0 then begin
+                    for index = 1 to bf_ do
+                      (!cur_node)#setst (void_node :: (!cur_node)#subtrees);
+                    done; (!cur_node)#setcap bf_; end;
+                  (!cur_node)#setst (Funcs.replace (!cur_node)#subtrees insertion_index insertion);
+                  (!cur_node)#incr_sz;
+                  (*calculate new alc_unq_ and unq_*)
+                  if !d_abs_ind >= unq_ then begin
+                    if fv_ = unq_ then fv_ <- fv_ + 1;
+                    unq_ <- !d_abs_ind + 1;
+                    self#increment_size ();
+                    end;
+                  if !d_abs_ind >= alc_unq_ then
+                    alc_unq_ <- !d_abs_ind + bf_ - (!d_abs_ind mod bf_) + 1;
+                end else begin (*recursive case*)
                   cur_node := List.nth ((!cur_node)#subtrees) trav_index;
-                  Printf.printf "(line 331) (!cur_node)#stsize=%d\n" (!cur_node)#stsize; flush stdout;
-                  (*reset*)
-                  cur := !blw;
-                  future := addition * pow bf_ (!dh-ch);
-                  offset := !offset + !future;
-                end;
-              done;
-              (*insert*)
-              let insertion_index = begin
-              if !d_abs_ind = unq_ - 1 then
-                !d_abs_ind mod bf_
-              else
-                (!d_abs_ind - 1) mod bf_ end;
-              in let insertion = new _node_ (data, unq_) in
-              if (!cur_node)#stcap = 0 then begin
-                for index = 1 to bf_ do
-                  (!cur_node)#setst (void_node :: (!cur_node)#subtrees);
-                done; (!cur_node)#setcap bf_; end;
-              ref (List.nth (!cur_node)#subtrees insertion_index) := insertion;
-              (!cur_node)#incr_sz;
-              (*calculate new alc_unq_ and unq_*)
-              if !d_abs_ind >= unq_ then begin
-                if fv_ = unq_ then fv_ <- fv_ + 1;
-                unq_ <- !d_abs_ind + 1;
-                self#increment_size ();
-                end;
-              if !d_abs_ind >= alc_unq_ then
-                alc_unq_ <- !d_abs_ind + bf_ - (!d_abs_ind mod bf_) + 1;
+                  loop_and_break future offset clo_ blw cap_ cur (ch+1);
+                end
+            end
+          in loop_and_break (ref (-1)) (ref 0) (ref 0) (ref (-1)) (ref 0) (ref 0) 1
       | Null_node ->
         let n = new _node_ (data, unq_) in
           root_ <- Node n;
@@ -611,8 +620,8 @@ class tree: tree_type =
       let ret = ref true in
       let cap = self#cap h in
       for node = 0 to cap-1 do
-        let p = (match self#ndfs node with | Pair (snd, fst) -> (snd, fst) | Null_pair -> (0., -2)) in
-        if snd p = -1 || snd p = -2 then ret := false; ()
+        let p = (match self#ndfs node with | Pair (snd, fst) -> (snd, fst) | Null_pair -> (0., -2)) in begin
+        if snd p = -1 || snd p = -2 then ret := false; () end
       done;
       !ret
     method alloc_by_bal () =
@@ -645,7 +654,6 @@ class tree: tree_type =
         end;
     method height_i i =
       if i = 0 then 0
-      else if i = 1 then 1
       else begin
         let ch = ref 1 in
         while not (self#cap_less_one !ch <= i && i < self#cap !ch) do
@@ -668,76 +676,67 @@ class tree: tree_type =
     method ndfs d_abs_ind =
       if d_abs_ind > unq_ - 1 || d_abs_ind < 0 then
         Null_pair
+      else if d_abs_ind = 0 then
+        match root_ with
+        | Node n -> let (a, b) = n#pair in Pair (a, b)
+        | Null_node -> failwith "ndfs: root is null"
       else begin
         let dh = self#height_i d_abs_ind in
         let cap_less_one_ = self#cap_less_one (dh) in
-          match ((d_abs_ind=0), (cap_less_one_= -1)) with
-          | (false, false) -> 
-            let cur_node =
-              match root_ with
-              | Node n -> ref n
-              | Null_node -> failwith "ndfs: root is a null node."
-            in
-            let future = -1 in
-            let offset = 0 in
-            let clo_ = 0 in
-            let blw = -1 in
-            let cap_ = 0 in
-            let cur = 0 in
-            for ch = 1 to dh do
-              if blw = -1 then begin
-                ref clo_ := 1;
-                ref cap_ := 1 + bf_;
+          let cur_node = (match root_ with | Node n -> ref n | Null_node -> failwith "ndfs: root is null") in
+          try
+            let rec loop_and_break = fun future offset clo_ blw cap_ cur ch -> 
+              if !blw = -1 then begin
+                clo_ := 1;
+                cap_ := 1 + bf_;
                 if ch = dh then raise Exit; (*exit point*)
                 let denom = 1.0 /. float_of_int bf_ in
-                  ref cur := int_of_float ( Stdlib.floor ( 
+                  cur := int_of_float ( Stdlib.floor ( 
                     float_of_int ( (d_abs_ind - cap_less_one_) / int_of_float (float_of_int bf_ ** float_of_int dh) )
                     /. denom
                   ) +. 1. );
-                let trav_index = (cur - 1) mod bf_ in
+                let trav_index = (!cur - 1) mod bf_ in
                 if (!cur_node)#stsize <= trav_index then raise Exit; (*exit point.*)
                 cur_node := List.nth ((!cur_node)#subtrees) trav_index;
-                ref blw := 0;
+                blw := 0;
                 let d = d_abs_ind - cap_less_one_ in
                 let frame = int_of_float (float_of_int bf_ ** float_of_int (dh-1)) in
-                  ref offset := int_of_float (Stdlib.floor (float_of_int d /. float_of_int frame));
-                ref future := offset;
-                ref clo_ := 0;
-                ref cap_ := 1;
-              end else
-                ref clo_ := clo_ + int_of_float ( float_of_int (bf_) ** float_of_int (ch-2) );
-                ref cap_ := cap_ + int_of_float ( float_of_int (bf_) ** float_of_int (ch-1) );
+                  offset := int_of_float (Stdlib.floor (float_of_int d /. float_of_int frame));
+                future := !offset;
+                clo_ := 0;
+                cap_ := 1;
+              end else begin
+                clo_ := !clo_ + int_of_float ( float_of_int (bf_) ** float_of_int (ch-2) );
+                cap_ := !cap_ + int_of_float ( float_of_int (bf_) ** float_of_int (ch-1) );
                 let denom = 1.0 /. float_of_int bf_ in
-                let r_cur = (float_of_int cur -. float_of_int clo_) /. float_of_int bf_ in
+                let r_cur = (float_of_int !cur -. float_of_int !clo_) /. float_of_int bf_ in
                 let near_begin = int_of_float ( Stdlib.floor ( r_cur *. denom ) *. float_of_int bf_ ) in
                 let frame = int_of_float ( float_of_int bf_ ** float_of_int (dh-ch+1) ) in
-                let end_ = offset + frame in
-                let num = d_abs_ind - cap_less_one_ - offset in
-                let r = float_of_int num /. (float_of_int end_ -. float_of_int offset ) in
+                let end_ = !offset + frame in
+                let num = d_abs_ind - cap_less_one_ - !offset in
+                let r = float_of_int num /. (float_of_int end_ -. float_of_int !offset ) in
                 let addition = int_of_float ( Stdlib.floor (r *. float_of_int bf_) ) in
                 if ch = dh then
-                  ref blw := cap_ + offset + addition
+                  blw := !cap_ + !offset + addition
                 else
-                  ref blw := cap_ + near_begin + addition; 
+                  blw := !cap_ + near_begin + addition; 
                 (*travese to blw*)
-                let trav_index = (blw - 1) mod bf_ in
+                let trav_index = (!blw - 1) mod bf_ in
                 if (!cur_node)#stsize <= trav_index then raise Exit; (*exit point.*)
                 cur_node := List.nth ((!cur_node)#subtrees) trav_index;
-            done; 
-            if dh = 1 then
+                if ch = dh then raise Exit;
+              end;
+              loop_and_break future offset clo_ blw cap_ cur (ch+1);
+            in loop_and_break (ref (-1)) (ref 0) (ref 0) (ref (-1)) (ref 0) (ref 0) 1
+          with Exit -> begin (*insert; stop just before the spot in context*)
+            if dh = 1 then begin
               let trav_index = (d_abs_ind - 1) mod bf_ in
                 cur_node := List.nth ((!cur_node)#subtrees) trav_index;
                 let (a, b) = (!cur_node)#pair in Pair (a, b)
-            else
+            end else
               let (a, b) = (!cur_node)#pair in Pair (a, b)
-          | (true, true) -> begin
-            match root_ with
-            | Null_node -> Null_pair
-            | Node n -> 
-              let (a,b) = n#pair in Pair (a, b) 
             end
-          | (_, _) -> failwith "Should never get here.";
-          end
+      end;
     method dfst d_abs_ind =
       if d_abs_ind > self#get_unq () || d_abs_ind < 0 then
         Null_node
