@@ -1,3 +1,4 @@
+open Nodedef
 let g_neg_one = fun num -> if num > -1 then true else false
 let g_zero = fun num -> if num > 0 then true else false
 let eq_neg_one = fun num -> if num = -1 then true else false
@@ -22,3 +23,9 @@ let rec replace = fun (l: 'a list) index value ->
   match index with
   | 0 -> value :: List.tl l
   | _ -> (List.hd l) :: replace (List.tl l) (index - 1) value
+
+let time_ms () = 
+  Sys.time () *. 1_000_000.
+
+let unpack l = List.map (fun x -> match x with | Pair (a, b) -> (a, b) | Null_pair -> (0., -2)) l
+  

@@ -11,6 +11,7 @@ class type node =
     method stcap: int
     method setcap: int -> unit
     method incr_sz: unit
+    method decr_sz: unit
     method setst: node list -> unit
   end 
 
@@ -28,8 +29,14 @@ class _node_ (init: float*int) : node =
     method setcap cap = capacity <- cap
     method incr_sz = size <- size + 1;
     if size > capacity then raise(Failure "Node size>capacity");
+    method decr_sz = size <- size - 1;
+    if size < 0 then raise(Failure "Node size<0");
     method setst nlist = subtrees <- nlist;
 end;;
 
 let void_node = new _node_ (0.0, -1)
 let unalc = new _node_ (0.0, -2)
+
+(*options*)
+type node_option = Null_node | Node of node
+type pair_option = Null_pair | Pair of float*int 
