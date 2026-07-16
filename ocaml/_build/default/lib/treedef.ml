@@ -601,7 +601,8 @@ class tree: tree_type =
                   done;
                   fv_ <- !i;
               end;
-              alc_unq_ <- !d_abs_ind - ( !d_abs_ind mod bf_ ) + 1;
+              let d = !d_abs_ind - cap_less_one_ in
+                alc_unq_ <- !d_abs_ind + bf_ - ( d mod bf_ );
               self#increment_size();
             end else begin (*recursive case*)
               (*Calculate blw*)
@@ -611,7 +612,7 @@ class tree: tree_type =
                   /. denom
                 ) +. 1. );
               let trav_index = (!cur - 1) mod bf_ in begin
-                (*if (!cur_node)#stsize <= trav_index then raise Exit; (*Fail case: Attempt to traverse to void node*)*)
+                if (!cur_node)#stsize <= trav_index then failwith "insert: attempt to create a disconnected graph";
                 cur_node := List.nth ((!cur_node)#subtrees) trav_index; end;
               blw := 0;
               let d = !d_abs_ind - cap_less_one_ in
@@ -658,7 +659,8 @@ class tree: tree_type =
                     done;
                     fv_ <- !i;
                 end;
-                alc_unq_ <- !d_abs_ind - ( !d_abs_ind mod bf_ ) + 1;
+                let d = !d_abs_ind - cap_less_one_ in
+                  alc_unq_ <- !d_abs_ind + bf_ - ( d mod bf_ );
                 self#increment_size();
               end else begin (*recursive case*)
                 cur_node := List.nth ((!cur_node)#subtrees) trav_index;
@@ -763,7 +765,8 @@ class tree: tree_type =
                     /. denom
                   ) +. 1. );
                 let trav_index = (!cur - 1) mod bf_ in begin
-                  cur_node := List.nth ((!cur_node)#subtrees) trav_index; end;
+                  cur_node := List.nth ((!cur_node)#subtrees) trav_index 
+                  end;
                 blw := 0;
                 let d = d_abs_ind - cap_less_one_ in
                 let frame = pow bf_ (dh-1) in
@@ -790,11 +793,15 @@ class tree: tree_type =
               let trav_index = (!blw - 1) mod bf_ in (*Stop potential.*)
                 if ch = dh - 1 then begin (*stop case*)
                   let trav_index = (d_abs_ind - 1) mod bf_ in
-                    cur_node := List.nth ((!cur_node)#subtrees) trav_index;
-                    let (a, b) = (!cur_node)#pair in Pair (a, b)
+                    if (!cur_node)#stcap <= trav_index then Pair (0., -2)
+                    else begin
+                      cur_node := List.nth ((!cur_node)#subtrees) trav_index;
+                      let (a, b) = (!cur_node)#pair in Pair (a, b) end
                 end else begin (*recursive case*)
-                  cur_node := List.nth ((!cur_node)#subtrees) trav_index;
-                  loop_and_break future offset clo_ blw cap_ cur (ch+1);
+                    if (!cur_node)#stcap <= trav_index then Pair (0., -2)
+                    else begin
+                      cur_node := List.nth ((!cur_node)#subtrees) trav_index;
+                      loop_and_break future offset clo_ blw cap_ cur (ch+1); end
                 end
             end
           in loop_and_break (ref (-1)) (ref 0) (ref 0) (ref (-1)) (ref 0) (ref 0) 1;

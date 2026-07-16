@@ -73,20 +73,23 @@ let () =
           printf "unq_ should read '7': %d\t.alc_unq_ should read '7': %d\n" ((!t1)#get_unq()) ((!t1)#get_alc_unq());
           printf "This should read '5 6 7 8 9 15':\t"; print_break 3 1; (!t1)#print();
           print_break 3 1; printf "(duration, us=%d)" duration;
+      close_box (); print_newline (); print_newline ();
       let start = int_of_float (time_ms ()) in
         (!t1)#insert 20. 2 7;
         let duration = int_of_float (time_ms ()) - start in
           printf "unq_ should read '12': %d\t.alc_unq_ should read '13': %d\n" ((!t1)#get_unq()) ((!t1)#get_alc_unq());
           printf "This should read '5 6 7 8 9 15 20':\t"; print_break 3 1; (!t1)#print();
           print_break 3 1; printf "(duration, us=%d)" duration;
+    close_box (); print_newline (); print_newline ();
     let t2 = new Treelib.Treedef.tree in
       let start = int_of_float (time_ms ()) in
-        t2#append 1.; t2#insert 1. 1 1;
+        t2#append 1.; t2#insert 1. 1 2;
         let duration = int_of_float (time_ms ()) - start in
           printf "This should read '1 1'::\t"; t2#print ();
           print_break 3 1; printf "(duration, us=%d)" duration;
     close_box (); print_newline (); print_newline ();
     (*test remove*)
+      Format.printf "Test remove\n";
       let start = int_of_float (time_ms ()) in
       t2#remove 1 2;
       let duration = int_of_float (time_ms ()) - start in
