@@ -27,5 +27,8 @@ let rec replace = fun (l: 'a list) index value ->
 let time_ms () = 
   Sys.time () *. 1_000_000.
 
-let unpack l = List.map (fun x -> match x with | Pair (a, b) -> (a, b) | Null_pair -> (0., -2)) l
+let unpack_pair_op p = match p with | Pair (a, b) -> (a, b) | Null_pair -> (0., -2)
+
+let unpack_node_op n = match n with | Node n -> n#pair | Null_node -> (0., -2)
+
   
