@@ -123,17 +123,15 @@ class tree: tree_type =
               cap_ := 1 + bf_;
               if ch = !dh then begin (*Stop potential.*)
                 (*insert*)
-                let insertion_index = begin
-                if !d_abs_ind = alc_unq_ - 1 then
-                  !d_abs_ind mod bf_
-                else
-                  (!d_abs_ind - 1) mod bf_ end;
-                in
-                if (!cur_node)#stcap <= (!cur_node)#stsize then
-                let r = ref (Funcs.replace !((!cur_node)#subtrees) insertion_index void_node) in
-                  (!cur_node)#setst r;
-                (*calculate new alc_unq_ and unq_*)
-                if !d_abs_ind >= alc_unq_ then alc_unq_ <- !d_abs_ind + 1;
+                let insertion_index = (!d_abs_ind - 1) mod bf_ in
+                  if (!cur_node)#stcap = 0 then begin
+                    for i = 1 to bf_ do (!cur_node)#subtrees := !((!cur_node)#subtrees) @ [void_node] done;
+                    (!cur_node)#setcap bf_;
+                  end;
+                  let r = ref (Funcs.replace !((!cur_node)#subtrees) insertion_index void_node) in
+                    (!cur_node)#setst r;
+                  (*calculate new alc_unq_ and unq_*)
+                  if !d_abs_ind >= alc_unq_ then alc_unq_ <- !d_abs_ind + 1;
               end else begin (*recursive case*)
                 (*Calculate blw*)
                 let denom = 1.0 /. float_of_int bf_ in
@@ -168,16 +166,15 @@ class tree: tree_type =
               let trav_index = (!blw - 1) mod bf_ in (*Stop potential.*)
                 if ch = !dh - 1 then begin (*stop case*)
                   (*insert*)
-                  let insertion_index = begin
-                  if !d_abs_ind = alc_unq_ - 1 then
-                    !d_abs_ind mod bf_
-                  else
-                    (!d_abs_ind - 1) mod bf_ end;
-                  in
-                  let r = ref (Funcs.replace !((!cur_node)#subtrees) insertion_index void_node) in
-                    (!cur_node)#setst r;
-                  (*calculate new alc_unq_ and unq_*)
-                  if !d_abs_ind >= alc_unq_ then alc_unq_ <- !d_abs_ind + 1;
+                  let insertion_index = (!d_abs_ind - 1) mod bf_ in
+                    if (!cur_node)#stcap = 0 then begin
+                      for i = 1 to bf_ do (!cur_node)#subtrees := !((!cur_node)#subtrees) @ [void_node] done;
+                      (!cur_node)#setcap bf_;
+                    end;
+                    let r = ref (Funcs.replace !((!cur_node)#subtrees) insertion_index void_node) in
+                      (!cur_node)#setst r;
+                    (*calculate new alc_unq_ and unq_*)
+                    if !d_abs_ind >= alc_unq_ then alc_unq_ <- !d_abs_ind + 1;
                 end else begin (*recursive case*)
                   cur_node := List.nth !((!cur_node)#subtrees) trav_index;
                   loop_and_break future offset clo_ blw cap_ cur (ch+1);
@@ -292,9 +289,8 @@ class tree: tree_type =
                   (!d_abs_ind - 1) mod bf_ end;
                 in let insertion = new _node_ (data, unq_) in
                 if (!cur_node)#stcap = 0 then begin
-                  for index = 1 to bf_ do
-                    (!cur_node)#subtrees := !((!cur_node)#subtrees) @ [void_node]
-                  done; (!cur_node)#setcap bf_;
+                  for index = 1 to bf_ do (!cur_node)#subtrees := !((!cur_node)#subtrees) @ [void_node] done;
+                  (!cur_node)#setcap bf_;
                 end;
                 let r = ref (Funcs.replace !((!cur_node)#subtrees) insertion_index insertion) in
                   (!cur_node)#setst r;
@@ -309,16 +305,15 @@ class tree: tree_type =
               end else begin (*recursive case*)
                 (*Calculate blw*)
                 let denom = 1.0 /. float_of_int bf_ in
-                  cur := int_of_float ( Stdlib.floor ( 
-                    float_of_int (!d_abs_ind - cap_less_one_) /. float_of_int (pow bf_ !dh)
-                    /. denom
-                  ) +. 1. );
+                  cur := float_of_int (!d_abs_ind - cap_less_one_) /. float_of_int (pow bf_ !dh) /. denom +. 1.
+                  |> Stdlib.floor |> int_of_float;
                 let trav_index = (!cur - 1) mod bf_ in begin
                   cur_node := List.nth !((!cur_node)#subtrees) trav_index; end;
                 blw := 0;
                 let d = !d_abs_ind - cap_less_one_ in
                 let frame = pow bf_ (!dh-1) in
-                  offset := int_of_float (Stdlib.floor (float_of_int d /. float_of_int frame));
+                  offset := float_of_int d /. float_of_int frame
+                  |> Stdlib.floor |> int_of_float;
                 future := !offset;
                 clo_ := 0;
                 cap_ := 1;
@@ -334,7 +329,7 @@ class tree: tree_type =
               let end_: int = !offset + frame in
               let num = !d_abs_ind - cap_less_one_ - !offset in
               let r = float_of_int num /. (float_of_int end_ -. float_of_int !offset ) in
-              let addition = int_of_float ( Stdlib.floor (r *. float_of_int bf_) ) in
+              let addition = (r *. float_of_int bf_) |> Stdlib.floor |> int_of_float in
                 blw := !cap_ + near_begin + addition; 
               (*travese to blw*)
               let trav_index = (!blw - 1) mod bf_ in (*Stop potential.*)
@@ -347,9 +342,8 @@ class tree: tree_type =
                     (!d_abs_ind - 1) mod bf_ end;
                   in let insertion = new _node_ (data, unq_) in
                   if (!cur_node)#stcap = 0 then begin
-                    for index = 1 to bf_ do
-                      (!cur_node)#subtrees := !((!cur_node)#subtrees) @ [void_node];
-                    done; (!cur_node)#setcap bf_;
+                    for index = 1 to bf_ do (!cur_node)#subtrees := !((!cur_node)#subtrees) @ [void_node] done;
+                    (!cur_node)#setcap bf_;
                   end;
                   let r = ref (Funcs.replace !((!cur_node)#subtrees) insertion_index insertion) in
                     (!cur_node)#setst r;
@@ -518,7 +512,7 @@ class tree: tree_type =
               blw := 0;
               let d = !d_abs_ind - cap_less_one_ in
               let frame = pow bf_ (h-1) in
-                offset := int_of_float (Stdlib.floor (float_of_int d /. float_of_int frame));
+                offset := float_of_int d /. float_of_int frame |> Stdlib.floor |> int_of_float;
               future := !offset;
               clo_ := 0;
               cap_ := 1;
