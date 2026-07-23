@@ -10,6 +10,7 @@ class type node =
     method stsize: int
     method stcap: int
     method setcap: int -> unit
+    method incr_cap: unit 
     method incr_sz: unit
     method decr_sz: unit
     method setst: node list ref -> unit 
@@ -27,6 +28,7 @@ class _node_ (init: float*int) : node =
     method stsize = size 
     method stcap = capacity
     method setcap cap = capacity <- cap
+    method incr_cap = capacity <- capacity + 1
     method incr_sz = size <- size + 1;
     if size > capacity then raise(Failure "Node size>capacity");
     method decr_sz = size <- size - 1;
