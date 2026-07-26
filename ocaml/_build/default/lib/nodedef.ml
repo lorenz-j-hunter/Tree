@@ -8,6 +8,7 @@ class type node =
     method pair: float * int
     method subtrees: node list ref
     method stsize: int
+    method setsize: int -> unit
     method stcap: int
     method setcap: int -> unit
     method incr_cap: unit 
@@ -27,6 +28,7 @@ class _node_ (init: float*int) : node =
     method subtrees = subtrees_
     method stsize = size 
     method stcap = capacity
+    method setsize nsize = size <- nsize;
     method setcap cap = capacity <- cap
     method incr_cap = capacity <- capacity + 1
     method incr_sz = size <- size + 1;
