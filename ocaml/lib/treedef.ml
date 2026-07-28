@@ -625,8 +625,8 @@ class tree: tree_type =
                 let abs_indices = List.map (fun x -> snd (x#pair)) !((!cur_node)#subtrees) in
                   if all_of abs_indices eq_neg_one then begin
                     (!cur_node)#setst (ref []); (!cur_node)#setcap 0; (!cur_node)#setsize 0;
-                    let d = !d_abs_ind - cap_less_one_ in alc_unq_ <- !d_abs_ind - ( d mod bf_ );
-                  end;
+                    end;
+                let d = !d_abs_ind - cap_less_one_ in alc_unq_ <- !d_abs_ind - ( d mod bf_ ) + bf_;
                 if !d_abs_ind = unq_ - 1 then unq_ <- !d_abs_ind;
                 if !d_abs_ind < fv_ then fv_ <- !d_abs_ind;
                 self#decrement_size();
@@ -681,8 +681,8 @@ class tree: tree_type =
                   let abs_indices = List.map (fun x -> snd (x#pair)) !((!cur_node)#subtrees) in
                     if all_of abs_indices eq_neg_one then begin
                       (!cur_node)#setst (ref []); (!cur_node)#setcap 0; (!cur_node)#setsize 0;
-                      let d = !d_abs_ind - cap_less_one_ in alc_unq_ <- !d_abs_ind - ( d mod bf_ );
                     end;
+                  let d = !d_abs_ind - cap_less_one_ in alc_unq_ <- !d_abs_ind - ( d mod bf_ ) + bf_ ;
                   if !d_abs_ind = unq_ - 1 then unq_ <- !d_abs_ind;
                   if !d_abs_ind < fv_ then fv_ <- !d_abs_ind;
                   self#decrement_size();

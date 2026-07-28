@@ -13,7 +13,7 @@
 #  ; build_dir = In_build_dir "default"
 #  ; instrument_with = []
 #  }
-$ /home/lhunter/.opam/5.3.0/bin/ocamlc.opt -config > /tmp/dune_b1a473_output
+$ /home/lhunter/.opam/5.3.0/bin/ocamlc.opt -config > /tmp/dune_eec8fd_output
 $ (cd _build/default/test && ./test_tree.exe)
 > ()
 >       tree_test_code ()
@@ -47,7 +47,7 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                5.000000 6.000000 7.000000 8.000000 9.000000 10.000000 11.000000 12.000000 
 >
->                (duration, us=159)
+>                (duration, us=77)
 >
 >                )
 >
@@ -69,7 +69,7 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                5.000000 6.000000 7.000000 8.000000 9.000000 
 >
->                (duration, us=16)
+>                (duration, us=14)
 >
 >                )
 >
@@ -87,7 +87,7 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                5.000000 6.000000 7.000000 8.000000 9.000000 
 >
->                (duration, us=9)
+>                (duration, us=8)
 >
 >             )
 >
@@ -157,7 +157,7 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                5.000000 6.000000 7.000000 8.000000 9.000000 15.000000 20.000000 
 >
->                (duration, us=2)
+>                (duration, us=3)
 >
 >             )
 >
@@ -177,7 +177,7 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                1.000000 1.000000 
 >
->                (duration, us=2)
+>                (duration, us=3)
 >
 >             )
 >
@@ -222,7 +222,7 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                (
 >
->                (duration, us=794)
+>                (duration, us=658)
 >
 >                )
 >
@@ -236,7 +236,7 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                (This should read '1 1':	1.000000 1.000000 
 >
->                (duration, us=7363)
+>                (duration, us=7633)
 >
 >             )
 >
@@ -288,7 +288,7 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                (
 >
->                (duration, us = 199)
+>                (duration, us = 310)
 > This should read 44-58:
 >                44.000000 45.000000 46.000000 47.000000 48.000000 49.000000 50.000000 51.000000 52.000000 53.000000 54.000000 55.000000 56.000000 57.000000 58.000000 
 >
@@ -314,9 +314,14 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                (
 >
->                44.000000 45.000000 46.000000 47.000000 48.000000 49.000000 50.000000 51.000000 52.000000 53.000000 55.000000 56.000000 57.000000 58.000000 
+>                t4#print ()
 >
->                (duration, us=6)
+>                44.000000 45.000000 46.000000 47.000000 48.000000 49.000000 50.000000 51.000000 52.000000 53.000000 55.000000 56.000000 
+>
+>                t4#get_alc_unq () =13
+>
+>
+>                (duration, us=5)
 >
 >                )
 >
@@ -332,8 +337,13 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                (
 >
+>                t4#print ()
+>
 >                44.000000 45.000000 46.000000 48.000000 49.000000 50.000000 51.000000 52.000000 53.000000 55.000000 56.000000 
->                (duration, us=468)
+>
+>                t4#get_alc_unq () =13
+>
+>                (duration, us=549)
 >
 >                )
 >
@@ -347,9 +357,14 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                (
 >
+>                t4#print ()
+>
 >                44.000000 46.000000 48.000000 53.000000 55.000000 56.000000 
 >
->                (duration, us=64)
+>                t4#get_alc_unq () =13
+>
+>
+>                (duration, us=66)
 >
 >                )
 >
@@ -365,7 +380,12 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                (
 >
+>                t4#print ()
+>
 >                44.000000 1.230000 46.000000 48.000000 53.000000 55.000000 56.000000 
+>
+>                t4#get_alc_unq () =13
+>
 >
 >                (duration, us=3)
 >
@@ -383,9 +403,14 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                (
 >
+>                t4#print ()
+>
 >                44.000000 1.230000 46.000000 48.000000 4.560000 53.000000 55.000000 56.000000 
 >
->                (duration, us=3)
+>                t4#get_alc_unq () =13
+>
+>
+>                (duration, us=2)
 >
 >                )
 >
@@ -401,7 +426,12 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >                (
 >
+>                t4#print ()
+>
 >                44.000000 1.230000 46.000000 48.000000 4.560000 55.000000 56.000000 
+>
+>                t4#get_alc_unq () =13
+>
 >
 >                (duration, us=3)
 >
@@ -420,9 +450,13 @@ $ (cd _build/default/test && ./test_tree.exe)
 >                (
 >
 >                t4#print
-> 44.000000 1.230000 46.000000 7.890000 48.000000 4.560000 55.000000 56.000000 
 >
->                (duration, us=3)
+>                44.000000 1.230000 46.000000 7.890000 48.000000 4.560000 55.000000 56.000000 
+>
+>                t4#get_alc_unq () =13
+>
+>
+>                (duration, us=4)
 >
 >                )
 >
@@ -432,13 +466,13 @@ $ (cd _build/default/test && ./test_tree.exe)
 >
 >          (
 >
->          alc_unq_ is 17, should be 13
+>          alc_unq_ is 13, should be 13
 >
 >             (t4#alloc_by_bal
 >
 >                (
 >
->                (duration, us=51)
+>                (duration, us=50)
 >
 >                The alc_unq_ now is 21, it should be 21
 >

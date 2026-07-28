@@ -182,7 +182,9 @@ let () =
       let start = time_us () |> int_of_float in
         t4#remove 2 5;
         let duration = (time_us () |> int_of_float) - start in
-          printf "@.@;<0 15>(@.@;<0 15>"; t4#print ();
+          printf "@.@;<0 15>(@.";
+          printf "@;<0 15>%s@.@;<0 15>" "t4#print ()"; t4#print ();
+          printf "@.@;<0 15>%s=%d@." "t4#get_alc_unq () " (t4#get_alc_unq ());
           printf "@.@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>)@.";
         printf "@;<0 12>)@.";
@@ -193,7 +195,9 @@ let () =
         t4#remove 1 2;
         let duration = (time_us () |> int_of_float) - start in
           printf "@;<0 15>(@.";
-          printf "@;<0 15>"; t4#print (); printf "@;<0 15>(duration, us=%d)@." duration;
+          printf "@;<0 15>%s@.@;<0 15>" "t4#print ()"; t4#print ();
+          printf "@.@;<0 15>%s=%d@." "t4#get_alc_unq () " (t4#get_alc_unq ());
+          printf "@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>)@.";
       printf "@;<0 9>%s@." "Now it should read '44 46 48 53 55 56':";
@@ -202,7 +206,8 @@ let () =
         t4#remove 1 0;
         let duration = (time_us () |> int_of_float) - start in
           printf "@;<0 15>(@.";
-          printf "@;<0 15>"; t4#print ();
+          printf "@;<0 15>%s@.@;<0 15>" "t4#print ()"; t4#print ();
+          printf "@.@;<0 15>%s=%d@." "t4#get_alc_unq () " (t4#get_alc_unq ());
           printf "@.@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>@])@.";
@@ -212,7 +217,8 @@ let () =
         t4#insert 1.23 1 0;
         let duration = (time_us () |> int_of_float) - start in
           printf "@;<0 15>(@.";
-          printf "@;<0 15>"; t4#print ();
+          printf "@;<0 15>%s@.@;<0 15>" "t4#print ()"; t4#print ();
+          printf "@.@;<0 15>%s=%d@." "t4#get_alc_unq () " (t4#get_alc_unq ());
           printf "@.@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>@])@.";
@@ -222,7 +228,8 @@ let () =
         t4#insert 4.56 2 0;
         let duration = (time_us () |> int_of_float) - start in
           printf "@;<0 15>(@.";
-          printf "@;<0 15>"; t4#print ();
+          printf "@;<0 15>%s@.@;<0 15>" "t4#print ()"; t4#print ();
+          printf "@.@;<0 15>%s=%d@." "t4#get_alc_unq () " (t4#get_alc_unq ());
           printf "@.@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>@])@.";
@@ -233,7 +240,8 @@ let () =
         t4#remove 2 4;
         let duration = (time_us () |> int_of_float) - start in
           printf "@;<0 15>(@.";
-          printf "@;<0 15>"; t4#print ();
+          printf "@;<0 15>%s@.@;<0 15>" "t4#print ()"; t4#print ();
+          printf "@.@;<0 15>%s=%d@." "t4#get_alc_unq () " (t4#get_alc_unq ());
           printf "@.@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>@])@.";
@@ -244,7 +252,8 @@ let () =
         t4#fill 7.89;
         let duration = (time_us () |> int_of_float) - start in
           printf "@;<0 15>(@.";
-          printf "@;<0 15>%s@." "t4#print"; t4#print ();
+          printf "@;<0 15>%s@.@;<0 15>" "t4#print"; t4#print ();
+          printf "@.@;<0 15>%s=%d@." "t4#get_alc_unq () " (t4#get_alc_unq ());
           printf "@.@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>@])@.";
