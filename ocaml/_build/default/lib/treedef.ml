@@ -23,7 +23,7 @@ class type tree_type = object
   method allocate: unit -> unit 
   method is_alloc_bal: unit -> bool
   method alc_ht: unit -> int 
-  method count_alc: unit -> int
+  method count: ?which:string -> unit-> unit 
   (*public functions*)
   method fill: float -> unit 
   method print: unit -> unit
@@ -194,22 +194,32 @@ class tree: tree_type =
         incr index
       done; 
       !ch + 1
-    method count_alc () =
-      let rec loop_while_true = fun indices (current: node list ref) (prev: node list ref) prev_indices h ->
+    method count ?which:w_opt () =
+      let rec do_while = fun ~indices_:indices ~current_:(current: node list ref) ~prev_:(prev: node list ref) ~prev_indices_:prev_indices ~h_:h ?size:(s_opt: int ref option) ?fv:(fv_opt: int ref option) () ->
         indices := [];
         current := [];
         for treenode = self#cap_less_one h to (self#cap h) - 1 do
           match self#dfst treenode with
-          | Node n -> current := n :: !current
-          | Null_node -> current := unalc :: !current
+          | Node n -> begin
+            (*If searching for fv, exit if found*)
+            match fv_opt with | Some fv -> if (snd n#pair) < 0 then begin fv := treenode; raise Exit end; current := !current @ [n]; | None -> current := !current @ [n]; end
+          | Null_node -> current := !current @ [unalc];
         done;
-        for abs_index = 0 to (self#cap h - self#cap_less_one h) - 1 do
+        for abs_index = 0 to (self#cap h) - (self#cap_less_one h) - 1 do
           let n = List.nth !current abs_index in
           let _, snd = n#pair in
-          indices := snd :: !indices
+          indices := !indices @ [snd];
+          (*If determining size, increment.*)
+          match s_opt with | Some s -> List.iter (fun x -> if x >= 0 then incr s) !indices | None -> (); 
         done;
-        if none_of !indices g_neg_one then begin (*return.*)
+        (*If whole row is -1 or -2, stop.*)
+        let b = (match w_opt with | Some "unq" -> g_eq_zero | Some "alc_unq" -> g_neg_one | _ -> g_eq_zero) |> none_of !indices in
+        if b then begin
           (*Get d.*)
+          if h = 1 then begin
+            match root_ with
+            | Node n -> prev_indices := !prev_indices @ [0];
+            | Null_node -> prev_indices := !prev_indices @ [-2] end;
           let d = ref 0 in
           let n = ref 0 in
           let prev_size = ref (pow bf_ (h-1)) in
@@ -217,12 +227,27 @@ class tree: tree_type =
             if List.nth !prev_indices !n > -2 then d := !n;
             incr n
           done;
-          (self#cap_less_one h-1) + !d + 1;
+          (*If counting size, return size. Else return unq/alc_unq*)
+          match s_opt with | Some s -> !s | None -> begin
+          try
+            (self#cap_less_one (h-1)) + !d + 1; (*h > 1*)
+          with Failure _ -> !d + 1; (*h = 1*) end
         end else begin
           prev := !current;
           prev_indices := !indices;
-          loop_while_true indices current prev prev_indices (h+1); end
-      in loop_while_true (ref []) (ref []) (ref []) (ref []) 1 
+          do_while ~indices_:indices ~current_:current ~prev_:prev ~prev_indices_:prev_indices ~h_:(h+1) ?size:s_opt ?fv:fv_opt (); end
+      in match w_opt with
+      | Some "unq" -> unq_ <- do_while ~indices_:(ref []) ~current_:(ref []) ~prev_:(ref []) ~prev_indices_:(ref []) ~h_:1 ()
+      | Some "alc_unq" -> alc_unq_ <- do_while ~indices_:(ref []) ~current_:(ref []) ~prev_:(ref []) ~prev_indices_:(ref []) ~h_:1 ()
+      | Some "fv" -> begin 
+        let ret = ref 0 in try
+          fv_ <- do_while ~indices_:(ref []) ~current_:(ref []) ~prev_:(ref []) ~prev_indices_:(ref []) ~h_:1 ?fv:(Some ret) ()
+        with Exit -> fv_ <- !ret; end
+      | Some "size" -> begin
+        let ret = ref 0 in 
+        size_ <- do_while ~indices_:(ref []) ~current_:(ref []) ~prev_:(ref []) ~prev_indices_:(ref []) ~h_:1 ?size:(Some ret) () end
+      | None -> failwith "count: invalid arg" (*do all of them?*)
+      | _ -> failwith "count: invalid arg"
     (*public functions*)
     method fill (data: float) =
       match root_ with
@@ -235,23 +260,25 @@ class tree: tree_type =
             h := self#height_unit ();
           end else begin
             let init_fv = fv_ in
-              for abs_ind = init_fv to unq_ do
-                let search = self#ndfs abs_ind in
-                match search with
-                | Pair (fst, snd) ->
-                  if snd = -1 then begin
-                    h := self#height_i !d_abs_ind;
-                    fv_ <- abs_ind;
-                    raise Exit; end;
-                  if abs_ind = unq_ then begin
-                    d_abs_ind := abs_ind + 1;
-                    fv_ <- unq_ + 1;
-                    h := self#height_unit ();
-                    raise Exit; end;
+            try
+            for abs_ind = init_fv to unq_ do
+              let search = self#ndfs abs_ind in
+              match search with
+              | Pair (fst, snd) ->
+                if snd = -1 then begin
+                  h := self#height_i !d_abs_ind;
+                  fv_ <- abs_ind;
+                  raise Exit end;
+                if abs_ind = unq_ then begin
                   d_abs_ind := abs_ind + 1;
-                | Null_pair ->
-                  d_abs_ind := abs_ind + 1
-              done 
+                  fv_ <- unq_ + 1;
+                  h := self#height_unit ();
+                  raise Exit end;
+                d_abs_ind := abs_ind + 1;
+              | Null_pair ->
+                d_abs_ind := abs_ind + 1
+            done 
+            with Exit -> ()
           end;
           (*2. calculate dh*)
           let dh = ref 0 in
@@ -475,7 +502,11 @@ class tree: tree_type =
               let pair = (!target_node)#pair in
                 if (snd pair = -1 || snd pair = -2) then (!cur_node)#incr_sz;
               (*sort*)
-              if !d_abs_ind >= unq_ then unq_ <- !d_abs_ind + 1;
+              if !d_abs_ind >= unq_ then begin 
+                unq_ <- !d_abs_ind + 1;
+                let d = !d_abs_ind - cap_less_one_ in
+                  alc_unq_ <- !d_abs_ind + bf_ - ( d mod bf_ );
+              end;
               if !d_abs_ind < fv_ then begin (*search for next void index.*) 
                 let p = ref (Pair (0., 0)) in
                 let i = ref fv_ in
@@ -485,8 +516,6 @@ class tree: tree_type =
                   done;
                   fv_ <- !i;
               end;
-              let d = !d_abs_ind - cap_less_one_ in
-                alc_unq_ <- !d_abs_ind + bf_ - ( d mod bf_ );
               self#increment_size();
             end else begin (*recursive case*)
               (*Calculate blw*)
@@ -540,7 +569,11 @@ class tree: tree_type =
                 let pair = (!target_node)#pair in
                   if (snd pair = -1 || snd pair = -2) then (!cur_node)#incr_sz;
                 (*sort*)
-                if !d_abs_ind >= unq_ then unq_ <- !d_abs_ind + 1;
+                if !d_abs_ind >= unq_ then begin 
+                  unq_ <- !d_abs_ind + 1;
+                  let d = !d_abs_ind - cap_less_one_ in
+                    alc_unq_ <- !d_abs_ind + bf_ - ( d mod bf_ );
+                end;
                 if !d_abs_ind < fv_ then begin (*search for next void index.*) 
                   let p = ref (Pair (0., 0)) in
                   let i = ref fv_ in
@@ -550,8 +583,6 @@ class tree: tree_type =
                     done;
                     fv_ <- !i;
                 end;
-                let d = !d_abs_ind - cap_less_one_ in
-                  alc_unq_ <- !d_abs_ind + bf_ - ( d mod bf_ );
                 self#increment_size();
               end else begin (*recursive case*)
                 (*check for errors.*)
@@ -589,15 +620,22 @@ class tree: tree_type =
                 let r = ref (Funcs.replace !((!cur_node)#subtrees) insertion_index void_node) in
                   (!cur_node)#setst r;
               (!cur_node)#decr_sz;
-              let abs_indices = List.map (fun x -> snd (x#pair)) !((!cur_node)#subtrees) in
-                if all_of abs_indices eq_neg_one then begin
-                  (!cur_node)#setst (ref []); (!cur_node)#setcap 0; (!cur_node)#setsize 0;
-                  let d = !d_abs_ind - cap_less_one_ in alc_unq_ <- !d_abs_ind - ( d mod bf_ );
-                end;
               (*sort*)
-              if !d_abs_ind = unq_ - 1 then unq_ <- !d_abs_ind;
-              if !d_abs_ind < fv_ then fv_ <- !d_abs_ind;
-              self#decrement_size();
+              if h = self#height_unit () then begin
+                let abs_indices = List.map (fun x -> snd (x#pair)) !((!cur_node)#subtrees) in
+                  if all_of abs_indices eq_neg_one then begin
+                    (!cur_node)#setst (ref []); (!cur_node)#setcap 0; (!cur_node)#setsize 0;
+                    let d = !d_abs_ind - cap_less_one_ in alc_unq_ <- !d_abs_ind - ( d mod bf_ );
+                  end;
+                if !d_abs_ind = unq_ - 1 then unq_ <- !d_abs_ind;
+                if !d_abs_ind < fv_ then fv_ <- !d_abs_ind;
+                self#decrement_size();
+              end else begin (*worst case. algorithm for this?*)
+                self#count ?which:(Some "alc_unq") ();
+                self#count ?which:(Some "unq") (); 
+                self#count ?which:(Some "fv") ();
+                self#count ?which:(Some "size") ();
+              end;
             end else begin (*recursive case*)
               (*Calculate blw*)
               let denom = 1.0 /. float_of_int bf_ in
@@ -638,17 +676,29 @@ class tree: tree_type =
                   let r = ref (Funcs.replace !((!cur_node)#subtrees) insertion_index void_node) in
                     (!cur_node)#setst r;
                 (!cur_node)#decr_sz;
-                let abs_indices = List.map (fun x -> snd (x#pair)) !((!cur_node)#subtrees) in
-                  if all_of abs_indices eq_neg_one then begin
-                    (!cur_node)#setst (ref []); (!cur_node)#setcap 0; (!cur_node)#setsize 0;
-                    let d = !d_abs_ind - cap_less_one_ in alc_unq_ <- !d_abs_ind - ( d mod bf_ );
-                  end;
                 (*sort*)
-                if !d_abs_ind = unq_ - 1 then unq_ <- !d_abs_ind;
-                if !d_abs_ind < fv_ then fv_ <- !d_abs_ind;
-                self#decrement_size();
+                if h = self#height_unit () then begin
+                  let abs_indices = List.map (fun x -> snd (x#pair)) !((!cur_node)#subtrees) in
+                    if all_of abs_indices eq_neg_one then begin
+                      (!cur_node)#setst (ref []); (!cur_node)#setcap 0; (!cur_node)#setsize 0;
+                      let d = !d_abs_ind - cap_less_one_ in alc_unq_ <- !d_abs_ind - ( d mod bf_ );
+                    end;
+                  if !d_abs_ind = unq_ - 1 then unq_ <- !d_abs_ind;
+                  if !d_abs_ind < fv_ then fv_ <- !d_abs_ind;
+                  self#decrement_size();
+                end else begin (*worst case. algorithm for this?*)
+                  self#count ?which:(Some "alc_unq") ();
+                  self#count ?which:(Some "unq") (); 
+                  self#count ?which:(Some "fv") ();
+                  self#count ?which:(Some "size") ();
+                  (*NOTE:
+                  I determined that the alc_unq_ was failing on the last test.
+                  It was failing in insert 7.89 1 0.
+                  Turns out remove is not updateing unq_ correctly in every case.
+                  So I did all this.*)
+                end;
               end else begin (*traverse*)
-                if (!cur_node)#stcap <= trav_index then failwith "remove: node does not exist" 
+                if (!cur_node)#stcap <= trav_index then failwith "remove: node does not exist"
                 else let k = (List.nth !((!cur_node)#subtrees) trav_index) in
                 if snd (k#pair) < 0 then failwith "remove: node does not exist"; 
                 cur_node := List.nth !((!cur_node)#subtrees) trav_index;

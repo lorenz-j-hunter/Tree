@@ -165,28 +165,30 @@ let () =
       let start = time_us () |> int_of_float in
         for i = 44 to 58 do t3#fill (float_of_int i); printf "@;<0 12>t3#fill %d@." i; done;
         let duration = (time_us () |> int_of_float) - start in
-          printf "@;<0 15>(@."; printf "@;<0 15>(duration = %d)@." duration;
-          printf "@;<0 15>%s@." "This should read 44-58:"; t3#print ();
-          printf "@;<0 15>)@.";
+          printf "@;<0 15>(@."; printf "@;<0 15>(duration, us = %d)" duration;
+          printf "@.@;<0 15>%s@;<0 15>" "This should read 44-58:"; t3#print ();
+          printf "@.@;<0 15>)@.";
         printf "@;<0 12>)@.";
       printf "@;<0 9>@])@.";
     printf "@;<0 6>)@.@;<0 6>(@.";
     (*test assignment*)
     let t4 = t3 in
       printf "@;<0 9>@[(%s@." "t4 = t3";
-      printf "@;<0 9>%s" "This should read 44-58:"; t4#print ();
+      printf "@;<0 9>%s@." "This should read 44-58:";
+      printf "@;<0 9>"; t4#print ();
       (*test remove*)
-      printf "@;<0 12>(%s@." "This should read '44 45 46 47 48 49 50 51 52 53 55 56 57 58':";
+      printf "@;<0 9>%s@." "This should read '44 45 46 47 48 49 50 51 52 53 55 56 57 58':";
+      printf "@;<0 12>(%s@." "t4#remove 2 5";
       let start = time_us () |> int_of_float in
         t4#remove 2 5;
         let duration = (time_us () |> int_of_float) - start in
-          printf "@;<0 15>(@."; t4#print ();
-          printf "@;<0 15>(duration, us=%d)@." duration;
+          printf "@.@;<0 15>(@.@;<0 15>"; t4#print ();
+          printf "@.@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>)@.";
         printf "@;<0 12>)@.";
       printf "@;<0 9>@])@.@;<0 9>@[<v 0>(@.";
-      printf "@;<0 9>%s" "Now it should read '44 45 46 48 49 50 51 52 53 55 56':";
-      printf "@;<0 12>(@.";
+      printf "@;<0 9>%s@." "Now it should read '44 45 46 48 49 50 51 52 53 55 56':";
+      printf "@;<0 12>(%s@." "t4#remove 1 2";
       let start = time_us () |> int_of_float in
         t4#remove 1 2;
         let duration = (time_us () |> int_of_float) - start in
@@ -194,17 +196,18 @@ let () =
           printf "@;<0 15>"; t4#print (); printf "@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>)@.";
-      printf "@;<0 9>%s" "Now it should read '44 46 48 53 55 56':";
-      printf "@;<0 12>(@.";
+      printf "@;<0 9>%s@." "Now it should read '44 46 48 53 55 56':";
+      printf "@;<0 12>(%s@." "t4#remove 1 0";
       let start = (time_us () |> int_of_float) in
         t4#remove 1 0;
         let duration = (time_us () |> int_of_float) - start in
           printf "@;<0 15>(@.";
-          printf "@;<0 15>(duration, us=%d)@." duration;
+          printf "@;<0 15>"; t4#print ();
+          printf "@.@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>@])@.";
       printf "@;<0 9>@[<v 0>(@.";
-      printf "@;<0 9>%s@.@;<0 12>(%s" "Now it should read '44 1.23 46 48 53 55 56':" "t4#insert 1.23 1 0";
+      printf "@;<0 9>%s@.@;<0 12>(%s@." "Now it should read '44 1.23 46 48 53 55 56':" "t4#insert 1.23 1 0";
       let start = (time_us () |> int_of_float) in
         t4#insert 1.23 1 0;
         let duration = (time_us () |> int_of_float) - start in
@@ -214,7 +217,7 @@ let () =
           printf "@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>@])@.";
       printf "@;<0 9>@[<v 0>(@.";
-      printf "@;<0 9>%s@.@;<0 12>(%s" "Now it should read '44 1.23 46 48 4.56 53 55 56':" "t4#insert 4.56 2 0";
+      printf "@;<0 9>%s@.@;<0 12>(%s@." "Now it should read '44 1.23 46 48 4.56 53 55 56':" "t4#insert 4.56 2 0";
       let start = (time_us () |> int_of_float) in
         t4#insert 4.56 2 0;
         let duration = (time_us () |> int_of_float) - start in
@@ -225,7 +228,7 @@ let () =
       printf "@;<0 12>)@.@;<0 9>@])@.";
       (*test remove*)
       printf "@;<0 9>@[<v 0>(@.";
-      printf "@;<0 9>%s@.@;<0 12>(%s" "Now it should read '44 1.23 46 48 4.56 55 56':" "t4#remove 2 4";
+      printf "@;<0 9>%s@.@;<0 12>(%s@." "Now it should read '44 1.23 46 48 4.56 55 56':" "t4#remove 2 4";
       let start = (time_us () |> int_of_float) in
         t4#remove 2 4;
         let duration = (time_us () |> int_of_float) - start in
@@ -236,25 +239,25 @@ let () =
       printf "@;<0 12>)@.@;<0 9>@])@.";
       (*test insert*)
       printf "@;<0 9>@[<v 0>(@.";
-      printf "@;<0 9>%s@.@;<0 12>(%s" "Now it should read '44 1.23 46 7.89 48 4.56 55 56':" "t4#fill";
+      printf "@;<0 9>%s@.@;<0 12>(%s@." "Now it should read '44 1.23 46 7.89 48 4.56 55 56':" "t4#fill 7.89";
       let start = (time_us () |> int_of_float) in
         t4#fill 7.89;
         let duration = (time_us () |> int_of_float) - start in
           printf "@;<0 15>(@.";
-          printf "@;<0 15>"; t4#print ();
+          printf "@;<0 15>%s@." "t4#print"; t4#print ();
           printf "@.@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>@])@.";
       (*test alloc_by_bal*)
       printf "@;<0 9>@[<v 0>(@.";
-      printf "@;<0 9>%s%d%s@.@;<0 12>(%s" "alc_unq_ is " (t4#get_alc_unq ()) ", should be 13" "t4#alloc_by_bal";
+      printf "@;<0 9>%s%d%s@.@;<0 12>(%s@." "alc_unq_ is " (t4#get_alc_unq ()) ", should be 13" "t4#alloc_by_bal";
       let start = (time_us () |> int_of_float) in
         t4#alloc_by_bal ();
         let duration = (time_us () |> int_of_float) - start in
           printf "@;<0 15>(@.";
           printf "@;<0 15>(duration, us=%d)@." duration;
           printf "@;<0 15>%s%d%s@." "The alc_unq_ now is " (t4#get_alc_unq()) ", it should be 21";
-          printf "@;<0 15>"; t4#print ();
+          printf "@;<0 15>%s@.@;<0 15>" "t4#print"; t4#print ();
           printf "@.@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>@])@.";
 

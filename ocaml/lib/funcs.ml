@@ -1,6 +1,6 @@
 open Nodedef
 let g_neg_one = fun num -> if num > -1 then true else false
-let g_zero = fun num -> if num > 0 then true else false
+let g_eq_zero = fun num -> if num > 0 then true else false
 let eq_neg_one = fun num -> if num = -1 then true else false
 let rec none_of = fun (l: int list) condition -> (*tail recursive.*)
   match l with
