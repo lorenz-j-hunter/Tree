@@ -31,10 +31,8 @@ class _node_ (init: float*int) : node =
     method setsize nsize = size <- nsize;
     method setcap cap = capacity <- cap
     method incr_cap = capacity <- capacity + 1
-    method incr_sz = size <- size + 1;
-    if size > capacity then raise(Failure "Node size>capacity");
-    method decr_sz = size <- size - 1;
-    if size < 0 then raise(Failure "Node size<0");
+    method incr_sz = (size <- size + 1; if size > capacity then raise(Failure "Node size>capacity");)
+    method decr_sz = (size <- size - 1; if size < 0 then raise(Failure "Node size<0");)
     method setst arg = subtrees_ <- arg;
 end;;
 

@@ -269,5 +269,55 @@ let () =
           printf "@;<0 15>%s@.@;<0 15>" "t4#print"; t4#print ();
           printf "@.@;<0 15>)@.";
       printf "@;<0 12>)@.@;<0 9>@])@.";
-
+    printf "@;<0 9>)@.";
+  printf "@;<0 6>)@.@;<0 6>(@.";
+  let t5 = new tree in
+    printf "@;<0 9>(%s@[" "t5 = new tree";
+    for i = 0 to 39 do t5#fill (float_of_int i) done;
+    printf "@;<0 12>(%s@." "t5#ndfs 14";
+    let start = time_us () |> int_of_float in
+      let main_pair = unpack_pair_op (t5#ndfs 14) in
+      let duration = (time_us () |> int_of_float) - start in
+      printf "@;<0 15>(@.";
+      printf "@;<0 15>%s(%f, %d)@." "This should be (14, 14): " (fst main_pair) (snd main_pair);
+      printf "@;<0 15>(duration, us = %d)@." duration;
+      printf "@;<0 15>)";
+    printf "@;<0 12>)@.";
+    printf "@;<0 12>(%s@." "t5#ndfs 38";
+    let start = time_us () |> int_of_float in
+      let main_pair = unpack_pair_op (t5#ndfs 38) in
+      let duration = (time_us () |> int_of_float) - start in
+      printf "@;<0 15>(@.";
+      printf "@;<0 15>%s(%f, %d)@." "This should be (38, 38): " (fst main_pair) (snd main_pair);
+      printf "@;<0 15>(duration, us = %d)@." duration;
+      printf "@;<0 15>)";
+    printf "@;<0 12>)@.";
+    printf "@;<0 12>(%s@." "t5#ndfs 26";
+    let start = time_us () |> int_of_float in
+      let main_pair = unpack_pair_op (t5#ndfs 26) in
+      let duration = (time_us () |> int_of_float) - start in
+      printf "@;<0 15>(@.";
+      printf "@;<0 15>%s(%f, %d)@." "This should be (26, 26): " (fst main_pair) (snd main_pair);
+      printf "@;<0 15>(duration, us = %d)@." duration;
+      printf "@;<0 15>)";
+    printf "@;<0 12>)@.";
+    printf "@;<0 12>(%s@." "t5#ndfs 2";
+    let start = time_us () |> int_of_float in
+      let main_pair = unpack_pair_op (t5#ndfs 2) in
+      let duration = (time_us () |> int_of_float) - start in
+      printf "@;<0 15>(@.";
+      printf "@;<0 15>%s(%f, %d)@." "This should be (2, 2): " (fst main_pair) (snd main_pair);
+      printf "@;<0 15>(duration, us = %d)@." duration;
+      printf "@;<0 15>)";
+    printf "@;<0 12>)@.";
+    printf "@;<0 12>(%s@." "t5#ndfs 0";
+    let start = time_us () |> int_of_float in
+      let main_pair = unpack_pair_op (t5#ndfs 0) in
+      let duration = (time_us () |> int_of_float) - start in
+      printf "@;<0 15>(@.";
+      printf "@;<0 15>%s(%f, %d)@." "This should be (0, 0): " (fst main_pair) (snd main_pair);
+      printf "@;<0 15>(duration, us = %d)@." duration;
+      printf "@;<0 15>)";
+    printf "@;<0 12>)@.";
+  printf "@;<0 6>)@.@;<0 6>(@."; 
   in tree_test_code ()

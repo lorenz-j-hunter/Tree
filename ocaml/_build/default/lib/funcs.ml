@@ -23,8 +23,7 @@ let rec replace = fun (l: 'a list) index value ->
   match index with
   | 0 -> value :: List.tl l
   | _ -> (List.hd l) :: replace (List.tl l) (index - 1) value
-let time_us () = 
-  Sys.time () *. 1_000_000.
+let time_us () = Sys.time () *. 1_000_000.
 let unpack_pair_op p = match p with | Pair (a, b) -> (a, b) | Null_pair -> (0., -2)
 let unpack_node_op n = match n with | Node n -> n#pair | Null_node -> (0., -2)
 let unpack_to_node n = match n with | Node n -> n | Null_node -> new _node_ (0., -2)
