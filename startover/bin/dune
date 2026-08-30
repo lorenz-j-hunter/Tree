@@ -1,0 +1,4 @@
+(executable
+ (public_name startover)
+ (name main)
+ (libraries startover))
