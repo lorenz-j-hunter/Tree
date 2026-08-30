@@ -1,4 +1,0 @@
-(executable
- (public_name rec)
- (name main)
- (libraries lib stack))
