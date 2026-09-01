@@ -1,5 +1,0 @@
-(test
- (name test_tree)
- (modules :standard)
- (libraries treelib))
-

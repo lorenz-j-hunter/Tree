@@ -1,8 +1,0 @@
-lib: [
-  "_build/install/default/lib/rec/META"
-  "_build/install/default/lib/rec/dune-package"
-  "_build/install/default/lib/rec/opam"
-]
-bin: [
-  "_build/install/default/bin/rec"
-]

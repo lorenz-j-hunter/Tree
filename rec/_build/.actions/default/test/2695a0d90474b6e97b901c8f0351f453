@@ -1,1 +1,1 @@
-test/test_tree.ml: Tree
+test/test_tree.ml: Alcotest Stack Tree

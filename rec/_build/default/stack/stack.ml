@@ -12,3 +12,4 @@ class ['a] stack = object
   method push v = l <- v :: l
   method get_size () = List.length l
 end
+
