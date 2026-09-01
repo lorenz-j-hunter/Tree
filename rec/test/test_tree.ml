@@ -21,6 +21,13 @@ let test_insert () =
       if !s#get_size () > 0 then true else false
     with _ -> false)
 
+let test_search () =
+  Alcotest.(check bool) "Can search the tree" true (try
+      let s = ref (new stack) in
+      let r = root_ 1 in preorder (Insert 2) r s;
+      let _ = preorder (Search 2) r s in true
+    with _ -> false)
+
 let () =
   let open Alcotest in
   run "Tree" [
@@ -28,5 +35,6 @@ let () =
       test_case "doesn't crash" `Quick test_works;
       test_case "gets results" `Quick test_get_results;
       test_case "insert doesn't crash" `Quick test_insert;
+      test_case "search doesn't crash" `Quick test_search;
     ];
   ]
