@@ -6,8 +6,12 @@ type 'a tree =
 
 val fill : 'a -> 'a list -> int -> 'a list
 
-val executeall : ('a -> 'b) -> 'a list -> 'b Stack.stack ref -> unit 
-
 val root_ : ?bf:int -> 'a -> 'a tree
 
-val preorder : 'a tree -> 'b tree Stack.stack ref -> unit 
+type 'a action =
+  | Insert of 'a
+  | Remove of int
+  | Search of int
+  | Test 
+
+val preorder : 'a action -> 'a tree -> 'b tree Stack.stack ref -> unit 

@@ -16,15 +16,14 @@ let rec fill f l bf =
 
 let root_ ?bf:(bf=3) init = Node ({value=init; index=0; subtrees=[]}, (fill Leaf [] bf), bf)
 
-let rec executeall task args (stk: 'a stack ref) =
-  match args with
-    | [] -> () 
-    | hd :: [] -> let ret = task hd in !stk#push ret; executeall task [] stk 
-    | hd :: tl -> let ret = task hd in !stk#push ret; executeall task tl stk ;;
+type 'a action =
+  | Insert of 'a
+  | Remove of int
+  | Search of int
+  | Test 
 
-(*(Presumably) fills `results` with the results of preorder.*)
-let rec preorder = fun t (results: 'a stack ref)  ->
+let rec preorder = fun mode t (results: 'a stack ref)  ->
   match t with
   | Leaf -> !results#push Leaf  
   | Node (n, sts, bf) ->
-    for i = 0 to bf - 1 do preorder (List.nth sts i) results done;
+    for i = 0 to bf - 1 do preorder mode (List.nth sts i) results done;
