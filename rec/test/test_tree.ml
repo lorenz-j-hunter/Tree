@@ -27,5 +27,6 @@ let () =
     "preorder", [
       test_case "doesn't crash" `Quick test_works;
       test_case "gets results" `Quick test_get_results;
+      test_case "insert doesn't crash" `Quick test_insert;
     ];
   ]

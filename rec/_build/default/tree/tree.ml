@@ -22,8 +22,14 @@ type 'a action =
   | Search of int
   | Test 
 
-let rec preorder = fun mode t (results: 'a stack ref)  ->
+let rec preorder = fun (mode : 'a action) (t: 'a tree) (results: 'a tree stack ref)  ->
   match t with
-  | Leaf -> !results#push Leaf  
+  | Leaf -> begin
+    match mode with
+    | Insert (item : 'a) -> !results#push (root_ item)
+    | Remove (index : int) -> !results#push Leaf (* placeholder *)
+    | Search (index : int) -> !results#push Leaf (* placeholder *) 
+    | Test -> !results#push Leaf (* placeholder *)
+  end
   | Node (n, sts, bf) ->
     for i = 0 to bf - 1 do preorder mode (List.nth sts i) results done;

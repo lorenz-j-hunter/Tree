@@ -14,4 +14,4 @@ type 'a action =
   | Search of int
   | Test 
 
-val preorder : 'a action -> 'a tree -> 'b tree Stack.stack ref -> unit 
+val preorder : 'a action -> 'a tree -> 'a tree Stack.stack ref -> unit 
