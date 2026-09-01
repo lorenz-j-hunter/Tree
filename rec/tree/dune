@@ -1,3 +1,4 @@
 (library
  (name tree)
- (modules :standard))
+ (modules :standard)
+ (libraries stack))
