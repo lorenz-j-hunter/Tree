@@ -29,11 +29,13 @@ let rec preorder = fun (mode : 'a action) (t: 'a tree) (results: ('a tree * int)
     | Insert (item : 'a) ->
       let index = results#get_size () in (* gather results *)
         let foo = ref t in foo := new_node ~index:index item; (* modify tree *)
-        results#push ((new_node ~index:index item), index) 
+        results#push ((new_node ~index:index item), index)
     | Remove (index : int) ->
       let foo = ref t in foo := Leaf; (* Replace node with Leaf *)
-      results#push (Leaf, index) (* Replace node with Leaf *)
-    | Test -> results#push (Leaf, -1) (* placeholder *)
+    | Test -> results#push (Leaf, -1);
   end
-  | Node (n, subtrees) ->
-    for i = 0 to n.bf - 1 do preorder mode (List.nth subtrees i) results done;
+  | Node (n, subtrees) -> 
+    results#push (Node (n, subtrees), n.index);
+    for i = 0 to n.bf - 1 do
+      preorder mode (List.nth subtrees i) results;
+    done;
