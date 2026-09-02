@@ -1,10 +1,10 @@
 open Stack
 
-type 'a node = {value:'a; index:int; subtrees:'a node list}
+type 'a node = {value:'a; index:int; bf:int}
 
 type 'a tree =
   | Leaf
-  | Node of 'a node * 'a tree list * int
+  | Node of 'a node * 'a tree list
 
 let rec fill f l bf =
   let arg = f :: l in
@@ -14,31 +14,26 @@ let rec fill f l bf =
       if List.length l = bf then l
       else fill f arg bf
 
-let root_ ?bf:(bf=3) init = Node ({value=init; index=0; subtrees=[]}, (fill Leaf [] bf), bf)
+let new_node ?bf:(bf=3) ?index:(index= -1) init =
+  Node ({value=init; index=index; bf=bf}, (fill Leaf [] bf)) 
 
 type 'a action =
   | Insert of 'a
   | Remove of int
-  | Search of int
-  | Test 
-
-let rec preorder = fun (mode : 'a action) (t: 'a tree) (results: ('a tree * int) stack ref)  ->
+  | Test
+ 
+let rec preorder = fun (mode : 'a action) (t: 'a tree) (results: ('a tree * int) stack) ->
   match t with
   | Leaf -> begin
     match mode with
-    | Insert (item : 'a) -> let foo = ref t in foo := root_ item; !results#push ((root_ item), -1) 
-    | Remove (index : int) -> !results#push (Leaf, index) (* placeholder *)
-    | Search (index : int) -> !results#push (Leaf, index) (* placeholder *)
-    | Test -> !results#push (Leaf, -1) (* placeholder *)
+    | Insert (item : 'a) ->
+      let index = results#get_size () in (* gather results *)
+        let foo = ref t in foo := new_node ~index:index item; (* modify tree *)
+        results#push ((new_node ~index:index item), index) 
+    | Remove (index : int) ->
+      let foo = ref t in foo := Leaf; (* Replace node with Leaf *)
+      results#push (Leaf, index) (* Replace node with Leaf *)
+    | Test -> results#push (Leaf, -1) (* placeholder *)
   end
-  | Node (n, sts, bf) ->
-    for i = 0 to bf - 1 do preorder mode (List.nth sts i) results done;
-  (*
-  match mode with
-  | Search desired_index ->
-    let rec return = fun () ->
-      match results#pop () with
-      | (_, desired_index) -> fst (results#peek ())
-      | (_, _) -> return ()
-    in return ()
-  | _ -> () *)
+  | Node (n, subtrees) ->
+    for i = 0 to n.bf - 1 do preorder mode (List.nth subtrees i) results done;
