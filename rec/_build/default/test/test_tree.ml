@@ -22,22 +22,37 @@ let test_insert () =
     with _ -> false)
 
 let test_insert_1 () =
-  Alcotest.(check (list int)) "Insert is logically and semantically correct." [13; 40] (try
+  Alcotest.(check (list int)) "No logic errors" [13; 40; 121] (try
     let rec fill = fun ret ->
       match ret with
       | [] ->
-        let s = new stack in
         let r = new_node ~index:0 1 in
-          s#push (r, 0); (* Include Root Node *)
-          for _ = 0 to 2 do preorder (Insert 0) r s; done; (* Fill results with subtrees *)
-          fill (ret @ [s#get_size ()]); (* Call recursion *)
+        let results = ref (new stack) in
+          for i = 0 to 2 do
+            let s = new stack in
+              preorder (Insert 0) r s;
+              if i = 2 then results := s;
+          done; (* Fill results with subtrees *)
+          fill (ret @ [!results#get_size ()])
       | hd :: [] ->
-        let s = new stack in
         let r = new_node ~index:0 1 in
-          s#push (r, 0); (* Include root *)
-          for _ = 0 to 11 do preorder (Insert 0) r s; done; (*Fill first level, then second (bf=3)*)
-          ret @ [s#get_size ()]; (*Return Result*)
-      | _ -> [-1; -1]
+        let results = ref (new stack) in
+          for i = 0 to 11 do
+            let s = new stack in
+              preorder (Insert 0) r s;
+              if i = 11 then results := s; (* Call recursion *)
+          done; (* Fill results with subtrees *)
+          fill (ret @ [!results#get_size ()]); (* Call recursion *)
+      | fst :: snd :: [] ->
+        let r = new_node ~index:0 1 in
+        let results = ref (new stack) in
+          for i = 0 to 39 do
+            let s = new stack in
+              preorder (Insert 0) r s;
+              if i = 39 then results := s;
+          done; (* Fill results with subtrees *)
+          fill (ret @ [!results#get_size ()]); (* Call recursion *)
+      | _ -> ret
       in fill []
     with _ -> [-1; -1])
 
@@ -62,11 +77,11 @@ let () =
   let open Alcotest in
   run "Tree" [
     "preorder", [
-      test_case "doesn't crash" `Quick test_works;
-      test_case "gets results" `Quick test_get_results;
-      test_case "insert doesn't crash" `Quick test_insert;
-      test_case "insert functions correctly" `Quick test_insert_1;
-      test_case "remove doesn't crash" `Quick test_remove;
-      test_case "remove functions correctly" `Quick test_remove_1;
+      test_case "Test" `Quick test_works;
+      test_case "Test" `Quick test_get_results;
+      test_case "Insert" `Quick test_insert;
+      test_case "Insert" `Quick test_insert_1;
+      test_case "Remove" `Quick test_remove;
+      test_case "Remove" `Quick test_remove_1;
     ];
   ]

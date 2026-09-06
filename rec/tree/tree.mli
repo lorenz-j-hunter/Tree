@@ -14,3 +14,5 @@ type 'a action =
   | Test
 
 val preorder : 'a action -> 'a tree -> ('a tree * int) Stack.stack -> unit 
+
+val preorder_unwrapped : 'a action -> 'a tree -> ('a tree * int) Stack.stack ref -> bool ref -> unit
